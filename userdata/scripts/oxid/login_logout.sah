@@ -1,0 +1,39 @@
+_include('../../include/nagios.inc');
+var $output = "";
+
+try {
+// warn/crit runtime threshold (0/0 = no threshold check)
+  initialize(15,20);
+
+ 
+_assertExists(_link("Anmelden"));
+// _assert(_isVisible(_link("Anmelden")));
+// _assertEqual("Anmelden", _getText(_link("Anmelden")));
+// _assertContainsText("Anmelden", _link("Anmelden"));
+// _highlight(_link("Anmelden"));
+// _click(_link("Anmelden"));
+// _highlight(_textbox("lgn_usr[1]"));
+// _click(_textbox("lgn_usr[1]"));
+// _setValue(_textbox("lgn_usr[1]"), "sahimon.itoring@googlemail.com");
+// _highlight(_password("lgn_pwd"));
+// _click(_password("lgn_pwd"));
+// _setValue(_password("lgn_pwd"), "sahimon");
+// _highlight(_submit("Anmelden"));
+// _click(_submit("Anmelden"));
+// _assertExists(_link("Sahimon Itoring"));
+// _assert(_isVisible(_link("Sahimon Itoring")));
+// _assertEqual("Sahimon Itoring", _getText(_link("Sahimon Itoring")));
+// _assertContainsText("Sahimon Itoring", _link("Sahimon Itoring"));
+// _highlight(_link("Logout"));
+// _click(_link("Logout"));
+// _assertExists(_link("Anmelden"));
+// _assert(_isVisible(_link("Anmelden")));
+// _assertEqual("Anmelden", _getText(_link("Anmelden")));
+// _assertContainsText("Anmelden", _link("Anmelden"));
+
+ } catch($error) {
+    _logExceptionAsFailure($error) 
+    $output = $error['message'];
+  if (! $output) { $output = $error; }
+} finally { saveResult($output); }
+

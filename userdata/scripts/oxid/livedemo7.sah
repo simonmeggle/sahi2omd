@@ -1,0 +1,25 @@
+_include('../../include/nagios.inc');
+var $output = "";
+
+try {
+// Parameter 1/2: warning/critical-Schwellwerte für diesen Testcase
+// (0,0) = kein Threshold
+  initialize(15,20);
+  
+  _click(_link("Anmelden"));
+  _setValue(_textbox("lgn_usr[1]"), "sahimon.itoring@googlemail.com");
+  _setValue(_password("lgn_pwd"), "sahimon");
+  _click(_submit("Anmelden"));
+  _click(_link("Logout"));
+
+  _wait(Math.random() * 1800);
+  
+ } catch($error) {
+    _logExceptionAsFailure($error) 
+    $output = $error['message'];
+  if (! $output) { $output = $error; }
+} finally { saveResult($output); }
+
+
+
+
