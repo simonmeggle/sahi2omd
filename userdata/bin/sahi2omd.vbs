@@ -1,6 +1,7 @@
 Option Explicit
 
 ' -m 1 -f oxid\login_logout.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s login_logout
+' -m 1 -f oxid\loginandbuy.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s loginandbuy
 
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port
@@ -56,6 +57,14 @@ Do While i < WScript.Arguments.Count
 	If WScript.Arguments(i) = "/?" Or WScript.Arguments(i) = "-?" Then
 		help = 1
 		Exit Do
+	ElseIf WScript.Arguments(i) = "/mode" Or WScript.Arguments(i) = "-mode" Then
+		i = i + 1
+		If i < WScript.Arguments.Count Then
+			mode = WScript.Arguments(i)
+		Else
+			WScript.echo "ERROR: You must specify a mode (nsca/db). " & helpstring 
+			WScript.quit(1)
+		End If
 	ElseIf WScript.Arguments(i) = "/f" Or WScript.Arguments(i) = "-f" Then
 		i = i + 1
 		If i < WScript.Arguments.Count Then
@@ -456,12 +465,13 @@ Sub about()
 		WScript.echo "Startup script for sahi tests which sends results to a OMD monitoring server." & VbCrLf & _
 					 "2012 by Simon Meggle, ConSol GmbH <simon.meggle@consol.de>" & VbCrLf & _
 					 "Usage:" & VbCrLf & VbCrLf & _
-		             "sahi2omd.vbs  [-f <sahi file>] [-u <startURL>] [-b <browser>]" & VbCrLf & _
+		             "sahi2omd.vbs [-mode (nsca|db)] [-f <sahi file>] [-u <startURL>] [-b <browser>]" & VbCrLf & _
 		             "        [-w <warning (sec)>] [-c <critical (sec)>]" & VbCrLf & _
 		             "        [-n <monitoring server>] [-h <hostname>]" & VbCrLf & _
 		             "        [-s <servicedescription>] [-z ] [-m <maxsessions> ] [-e] [-p]" & VbCrLf & _					 
 		             "" & VbCrLf & _
 		             "Parameters:" & VbCrLf & _
+					 "-mode   nsca: send results via NSCA, db: save results in local daabase." & VbCrLf & _
 		             "-f      Sahi test case (.sah) or test suite (.suite) file. " & VbCrLf & _
 		             "        Relative to sahi_scripts (see config config section in this script)" & VbCrLf & _
 		             "        e.g. '-f intranet\instranet_login.sah" & VbCrLf & _
