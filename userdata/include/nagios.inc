@@ -71,8 +71,8 @@ function saveResult($msg) {
        $check_result = "0"; 
 	   $msg = "" ;
    }
-// 2. determine duration_result
-//DBTODO: durations aller steps auswerten, falls vorhanden
+// 2. ok, we had no severe errors. Now check if durations are within thresholds. 
+// DBTODO: If we are in DB mode, we also check step durations. 
 	$duration_result = getduration_result($duration, $warn, $crit ); 
 	if ($check_result == 0 && $duration_result > 0) {
 	
