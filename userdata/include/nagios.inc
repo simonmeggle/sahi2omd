@@ -51,11 +51,13 @@ function saveResult($msg) {
 	   $msg = "" ;
    }
 // 2. determine duration_result
+//DBTODO: durations aller steps auswerten, falls vorhanden
 	$duration_result = getduration_result($duration, $warn, $crit ); 
 	if ($check_result == 0 && $duration_result > 0) {
 	
 		$msg += sprintf('ended OK but exceeded runtime thresholds (warn at %d s, crit at %d s)',$warn, $crit); 
 	}
+
 // 3. determine worstState
 	
    $total_result = getworststate($check_result, $duration_result);
