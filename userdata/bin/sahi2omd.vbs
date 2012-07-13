@@ -204,28 +204,31 @@ End If
 jobid = get_jobid
 
 If (is_mode_nsca) Then 
-	resultfile = sahi_results & "\\" & jobid & "_sahitestdata.TMP"
+	resultfile = sahi_results & "\\" & jobid & "_sahitestdata.TMP"	
 	nscadatafile = sahi_results & "\\" & jobid & "_nscadata.TMP"
+	' check NSCA
+	filexistsOrDie send_nsca_bin, "NSCA binary " & send_nsca_bin & " could not be found!"
+	filexistsOrDie send_nsca_cfg, "NSCA config file " & send_nsca_cfg & " could not be found!"
 End If 
 
-' HEALTH CHECKS -----------------------------------------------------------------------------------
+
 dbg "Check if Sahi is running..."
 If Not sahirunning Then
 	die 3, "UNKNOWN: Sahi does not run. Verify that Sahi is started and ready to run the tests. "  & helpstring
 End If
 dbg "...yes."
-' check if we have a existent check file
+
+' check if Sahi Suite / Case File is present
 filexistsOrDie sahi_scripts & "\" & file, "Sahi Test/Suite file " & sahi_scripts & "\" & file & " could not be found! "  & helpstring
 
-' check if NSCA can work (theoretically...)
-filexistsOrDie send_nsca_bin, "NSCA binary " & send_nsca_bin & " could not be found!"
-filexistsOrDie send_nsca_cfg, "NSCA config file " & send_nsca_cfg & " could not be found!"
 
 ' RUN TESTS  -----------------------------------------------------------------------------------
 command = "java -cp " & sahi_home & "\lib\ant-sahi.jar net.sf.sahi.test.TestRunner -test " &  _
 	sahi_scripts & "\" & file & " -browserType " & browser & " -baseURL " & url & " -host localhost " &_
-	"-port 9999 -threads " & maxthreads & " -useSingleSession " & singlesession & _
-	" -initJS " & Chr(34) & "var $resultfile=" & Chr(39) & resultfile & Chr(39) & Chr(59) & Chr(34)
+	"-port 9999 -threads " & maxthreads & " -useSingleSession " & singlesession 
+If (is_mode_nsca) Then 
+	command = command & " -initJS " & Chr(34) & "var $resultfile=" & Chr(39) & resultfile & Chr(39) & Chr(59) & Chr(34)
+End If
 
 dbg "Calling Sahi command: '" & command & "'"
 Set Wshell = WScript.CreateObject("WScript.shell")
@@ -237,7 +240,7 @@ runtime = Round(timeend-timestart,0)
 
 dbg "Script ran in " & runtime & " seconds."
 
-' check if the sahi check was able to create the test result file
+' check if result file was created
 filexistsOrDie resultfile, "Cannot find the result file " & resultfile
 
 ' read TMP-resultfile and send the data to OMD (or DB... todo)
@@ -512,7 +515,7 @@ Function get_jobid()
 	Dim rdnum
 	Randomize
 	rdnum = Rnd
-	get_jobid = Int(rdnum * 1000000) 
+	get_jobid = Int(rdnum * 1000000000) 
 End Function 
 
 Sub EchoOut2DArray (arr)  

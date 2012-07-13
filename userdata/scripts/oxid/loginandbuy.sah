@@ -1,5 +1,4 @@
 _include('../../include/nagios.inc');
-var $output = "";
 
 try {
 // Parameter 1/2: warning/critical-Schwellwerte für diesen Testcase

@@ -5,9 +5,11 @@ function initialize($w, $c) {
    $crit = $c;
 
    if (typeof($resultfile) == "undefined") { 
-	$resultfile = "sahitask_manual.TMP";
+		$mode = "db";
+	} else {
+		$mode = "nsca";
 	};
-   //_alert($resultfile);
+   //_alert($mode);
    
    $nagiosStartTime = Math.floor(new Date().getTime() /
        1000).toString();
@@ -16,6 +18,7 @@ function initialize($w, $c) {
    if ($warn > 0 && $crit > 0 && $warn >= $crit) {
       throw "warning threshold must be less than critical threshold!";
    }
+   $output = "";
 }
 
 function saveResult($msg) {
