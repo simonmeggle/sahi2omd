@@ -1,10 +1,12 @@
 Option Explicit
 
 ' -m 1 -f oxid\login_logout.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s login_logout
+
 ' -m 1 -f oxid\loginandbuy.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s loginandbuy
+' -mode nsca -m 1 -f oxid\loginandbuy.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s loginandbuy
 
 Const bWaitOnReturn = True
-Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port
+Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
 Dim debug, version, FSObject, debugfile, objdebug
 Dim command,jobid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
 Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
@@ -60,7 +62,7 @@ Do While i < WScript.Arguments.Count
 	ElseIf WScript.Arguments(i) = "/mode" Or WScript.Arguments(i) = "-mode" Then
 		i = i + 1
 		If i < WScript.Arguments.Count Then
-			mode = WScript.Arguments(i)
+			mode = LCase(WScript.Arguments(i))
 		Else
 			WScript.echo "ERROR: You must specify a mode (nsca/db). " & helpstring 
 			WScript.quit(1)
@@ -136,7 +138,12 @@ If help = 1 Then
 	Call about()
 	WScript.Quit(1)
 End If
-	
+
+If mode = "" Then
+	WScript.echo "ERROR: You must specify a mode (nsca/db). "  & helpstring
+	WScript.quit(1)
+End If
+
 If file = "" Then
 	WScript.echo "ERROR: Please specify a test file/suite (-f) relative to the sahi/userdata/scripts directory. "  & helpstring
 	WScript.quit(1)
@@ -195,8 +202,11 @@ End If
 		
 
 jobid = get_jobid
-resultfile = sahi_results & "\\" & jobid & "_sahitestdata.TMP"
-nscadatafile = sahi_results & "\\" & jobid & "_nscadata.TMP"
+
+If (is_mode_nsca) Then 
+	resultfile = sahi_results & "\\" & jobid & "_sahitestdata.TMP"
+	nscadatafile = sahi_results & "\\" & jobid & "_nscadata.TMP"
+End If 
 
 ' HEALTH CHECKS -----------------------------------------------------------------------------------
 dbg "Check if Sahi is running..."
@@ -519,3 +529,18 @@ Sub dbg(message)
 		objdebug.write Time & ": " & message & VbCrLf
     End If
 End Sub
+
+Function is_mode_nsca()
+	If StrComp(mode, "nsca",1) Then
+	  is_mode_nsca = False	
+	Else 
+	  is_mode_nsca = True
+	End If
+End Function
+Function is_mode_db()
+	If StrComp(mode, "db",1) Then
+	  is_mode_db = False
+	Else 
+	  is_mode_db = True
+	End If
+End Function
