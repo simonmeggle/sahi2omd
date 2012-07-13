@@ -11,14 +11,31 @@ function initialize($w, $c) {
 	};
    //_alert($mode);
    
-   $nagiosStartTime = Math.floor(new Date().getTime() /
-       1000).toString();
+   //$nagiosStartTime = Math.floor(new Date().getTime() / 1000).toString();
+   $nagiosStartTime = (new Date().getTime() / 1000).toString();
+   _alert($nagiosStartTime);
    _set($startURL, window.document.location.href);
    // Validierung der Thresholds
    if ($warn > 0 && $crit > 0 && $warn >= $crit) {
       throw "warning threshold must be less than critical threshold!";
    }
+   $steps = {};
+   $stepstart = $nagiosStartTime;
+   $stepcount = 0;
    $output = "";
+}
+
+function step($stepname,$stepthreshold) {
+	//var $now = Math.floor(new Date().getTime() / 1000).toString();
+	var $now = (new Date().getTime() / 1000).toString();
+	var $step_duration = ($now - $stepstart).toFixed(2);
+	$stepcount++;
+	//_alert("this is step " + $stepname + "; step duration was " + $step_duration + " seconds. Step number is " + $stepcount );
+	$steps["step " + $stepcount + ": " +$stepname] = {};
+	$steps["step " + $stepcount + ": " +$stepname]["duration"] = $step_duration;
+	$steps["step " + $stepcount + ": " +$stepname]["result"]  = getstep_result ($step_duration, $stepthreshold);
+	
+	$stepstart = $now; 
 }
 
 function saveResult($msg) {
@@ -26,7 +43,8 @@ function saveResult($msg) {
    var $check_result;
    var $total_result;
    var $nagiosStopTime = Math.floor(new Date().getTime() / 1000).toString();
-   var $duration = ($nagiosStopTime - $nagiosStartTime).toString(); 
+   //var $duration = ($nagiosStopTime - $nagiosStartTime).toString(); 
+   var $duration = ($nagiosStopTime - $nagiosStartTime).toFixed(2); 
 // 1. determine check_result
    if (ScriptRunner.hasErrors() > 0) {
        var $errmesg, $errmesg1, $errmesg2 = "";
@@ -74,6 +92,12 @@ function saveResult($msg) {
 	 $suitename = _suiteInfo().suiteName;
 	}
    write2CSV($suitename, $testname, $total_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
+   
+   	for (var $s in $steps) {
+		for (var $i in $steps[$s]) {
+			_alert ($s + ": " + $i + "= " + $steps[$s][$i]);
+		}
+	}
 }
 
 function getworststate ($cres, $durres) {
@@ -104,6 +128,16 @@ function getduration_result ($dur, $w, $c) {
         }
       }
    }	  
+   return $ret;
+}
+
+function getstep_result ($dur, $threshold) {
+// compares step runtime against one threshold
+//_alert("dur=" + $dur + "warn=" + $w + "crit=" + $c );
+	var $ret = "0";
+	if ( $dur >= $threshold ) {    
+		$ret = "1";    
+    } 
    return $ret;
 }
 
