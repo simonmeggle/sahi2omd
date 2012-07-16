@@ -6,10 +6,10 @@ try {
   initialize(35,45);
 
 _wait(3000); 
-step("Click auf Anmeldung in 3 Sekunden",2);   
-_wait(800);  
+step("Click auf Anmeldung in 3 Sekunden",1);   
+_wait(100);  
 step("Click auf Password in 4 Sekunden",3);
-_wait(800);  
+_wait(100);  
 step("Click auf Anmeldelink in 2 Sekunden",3);
 
 
