@@ -1,4 +1,4 @@
-_include('sprintf2.inc');
+_include('sprintf.inc');
 
 function initialize($w, $c) {
    $warn = $w;
