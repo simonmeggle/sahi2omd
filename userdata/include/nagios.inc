@@ -1,4 +1,4 @@
-_include('sprintf.inc');
+_include('sprintf2.inc');
 
 function initialize($w, $c) {
    $warn = $w;
@@ -30,32 +30,30 @@ function initialize($w, $c) {
 function step($stepname,$stepthreshold) {
 	//var $now = Math.floor(new Date().getTime() / 1000).toString();
 	var $now = (new Date().getTime() / 1000).toString();
-	var $step_duration = ($now - $stepstart).toFixed(2);
+	var $stepduration = ($now - $stepstart).toFixed(2);
 	$stepcount++;
-	//_alert("this is step " + $stepname + "; step duration was " + $step_duration + " seconds. Step number is " + $stepcount );
-	$steps["step " + $stepcount + ": " +$stepname] = {};
-	$steps["step " + $stepcount + ": " +$stepname]["duration"] = $step_duration;
-	$steps["step " + $stepcount + ": " +$stepname]["result"]  = getstep_result ($step_duration, $stepthreshold);
+	//_alert("this is step " + $stepname + "; step duration was " + $stepduration + " seconds. Step number is " + $stepcount );
+	$steps["step " + $stepcount + ": '" +$stepname+"'"] = {};
+	$steps["step " + $stepcount + ": '" +$stepname+"'"]["duration"] = $stepduration;
+	$steps["step " + $stepcount + ": '" +$stepname+"'"]["threshold"]  = $stepthreshold;
 	
 	$stepstart = $now; 
 }
 
 function saveResult($msg) {
-   var $case_duration_result;
-   var step_duration_result; 
-   var $case_result;
-   var $total_result;
+   var $nsca_result = 0;
+   var $db_result = 0;
+   var $suitename;
    var $nagiosStopTime = Math.floor(new Date().getTime() / 1000).toString();
-   //var $duration = ($nagiosStopTime - $nagiosStartTime).toString(); 
    var $duration = ($nagiosStopTime - $nagiosStartTime).toFixed(2); 
    
    if (is_mode_db) {
 		var db = _getDB("com.mysql.jdbc.Driver", "jdbc://localhost/sahi", "sahi", "sahi");
    }
-// 1. Did we have exceptions? 
+   
    if (ScriptRunner.hasErrors() > 0) {
-       var $errmesg, $errmesg1, $errmesg2 = "";
-       $case_result = "2";      
+	   // 1. Fatal exceptions? 
+       var $errmesg, $errmesg1, $errmesg2 = "";   
        if ($msg) {
           // Splitten der Meldung über "\n" in ein Array. Die ersten beiden Zeilen
           // der error-Message sollten ausreichend sein (eine manuelle Exception
@@ -73,44 +71,65 @@ function saveResult($msg) {
        } else {
           $errmesg = "";
        }    
+	   $nsca_result = 2;   
+	   $db_result = 4;
        $msg = sprintf('ended with errors%s', $errmesg );
-// no script exceptions. 
-
-   } else {
-// 2.1 Now check script duration
-		$case_duration_result = getcase_duration_result($duration, $warn, $crit ); 
-		if ($case_duration_result > 0) {
-			$msg += sprintf('ended OK but exceeded runtime thresholds (warn at %d s, crit at %d s)',$warn, $crit); 
-		} else {
-			$case_result = "0"; 
-			$msg = "" ;
+    } else {
+		$msg = 'ended OK';
+		// 2.1 Now case duration
+		$nsca_result = getcase_duration_result($duration, $warn, $crit ); 
+		if ($nsca_result > 0) {
+			$msg += sprintf(', exceeded runtime (w: %d s, c: %d s)',$warn, $crit); 
+			switch ($nsca_result) {
+				case 1: $db_result = 3;
+					break;
+				case 2: $db_result = 2;
+					break;
+			}
 		}
+		// 2.2 todo step duration
+		for (var $s in $steps) {
+			var $step_result = getstep_result ($steps[$s]["duration"],$steps[$s]["threshold"]);			
+			if ($step_result > 0) { 
+				$msg += sprintf(', %s exceeded runtime (%0.2f s)', $s, $steps[$s]["duration"]);
+			}
+			$nsca_result = getworststate($nsca_result, $step_result);
+			$db_result = getworststate($db_result, $step_result);
+		}		
 	}
-
-// 2.2 todo step duration
-// 3. determine worstState
+	_alert ("Message is: " + $msg + ", nsca_result is" + $nsca_result + ", db_result = " + $db_result);
+	_set($stopURL, window.document.location.href);
+	_set($nagiosAgent, navigator.userAgent);
+	// Agent description can contain semicolon, replace globally
+	$nagiosAgent = $nagiosAgent.replace(/;/g,',');
+	var $testname = _scriptName();
 	
-   $total_result = getworststate($case_result, $case_duration_result);
-   _set($stopURL, window.document.location.href);
-   _set($nagiosAgent, navigator.userAgent);
-   // Agent description can contain semicolon, replace globally
-   $nagiosAgent = $nagiosAgent.replace(/;/g,',');
-   var $testname = _scriptName();
-   var $suitename = "" ; 
-   if (_suiteInfo() ) {
-	 $suitename = _suiteInfo().suiteName;
+	if (_suiteInfo() ) {
+		$suitename = _suiteInfo().suiteName;
+	} else {
+		$suitename = '';
 	}
-	write2CSV($suitename, $testname, $total_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
+	//write2CSV($suitename, $testname, $total_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
 	if (is_mode_db() ) {
 		//write2DB($suitename, $testname, $total_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
 	} else {
-		write2CSV($suitename, $testname, $total_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
+		//_alert ("will noe write to CSV!");
+		write2CSV($suitename, $testname, $nsca_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
 	}
-   	// for (var $s in $steps) {
-		// for (var $i in $steps[$s]) {
-			// _alert ($s + ": " + $i + "= " + $steps[$s][$i]);
-		// }
-	// }
+
+}
+
+function write2DB() {
+	//TODO
+}
+
+function write2CSV() {
+	var $args = Array.prototype.slice.call(arguments);
+	//_alert($args);
+	var $values = new Array();
+	$values[0] = $args;
+	//_alert($resultfile);
+	_writeCSVFile($values, $resultfile, false, ";");
 }
 
 function getworststate ($cres, $durres) {
@@ -146,7 +165,7 @@ function getcase_duration_result ($dur, $w, $c) {
 
 function getstep_result ($dur, $threshold) {
 // compares step runtime against one threshold
-//_alert("dur=" + $dur + "warn=" + $w + "crit=" + $c );
+//_alert("dur=" + $dur + "threshold=" + $threshold );
 	var $ret = "0";
 	if ( $dur >= $threshold ) {    
 		$ret = "1";    
@@ -159,16 +178,8 @@ function is_mode_db () {
 		//_alert("This is mode DB"); 
 		return true; 
 	} else { 
-		_alert("This is mode nsca!");
-		//return false; 
+		//_alert("This is mode nsca!");
+		return false; 
 	}
 }
 
-function write2CSV() {
-	var $args = Array.prototype.slice.call(arguments);
-	//_alert($args);
-	var $values = new Array();
-	$values[0] = $args;
-	//_alert($resultfile);
-	_writeCSVFile($values, $resultfile, false, ";");
-}
