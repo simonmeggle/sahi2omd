@@ -14,3 +14,7 @@ Case-Stati:
 
 
 
+testcases/testcase1_OK_3steps_allok.sah: 
+  3 Steps, alles OK
+testcases/testcase2_WARN_3steps_1step_runtimeexceeded.sah
+  3 Steps, 1. geht zu lange
