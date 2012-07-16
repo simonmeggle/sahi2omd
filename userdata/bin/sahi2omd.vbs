@@ -8,7 +8,7 @@ Option Explicit
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
 Dim debug, version, FSObject, debugfile, objdebug
-Dim command,jobid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
+Dim command,runid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
 Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
 
  ' Überprüfung ob Sahi läuft
@@ -201,11 +201,11 @@ If (warning > critical) Then
 End If
 		
 
-jobid = get_jobid
+runid = get_runid
 
 If (is_mode_nsca) Then 
-	resultfile = sahi_results & "\\" & jobid & "_sahitestdata.TMP"	
-	nscadatafile = sahi_results & "\\" & jobid & "_nscadata.TMP"
+	resultfile = sahi_results & "\\" & runid & "_sahitestdata.TMP"	
+	nscadatafile = sahi_results & "\\" & runid & "_nscadata.TMP"
 	' check NSCA
 	filexistsOrDie send_nsca_bin, "NSCA binary " & send_nsca_bin & " could not be found!"
 	filexistsOrDie send_nsca_cfg, "NSCA config file " & send_nsca_cfg & " could not be found!"
@@ -227,8 +227,13 @@ command = "java -cp " & sahi_home & "\lib\ant-sahi.jar net.sf.sahi.test.TestRunn
 	sahi_scripts & "\" & file & " -browserType " & browser & " -baseURL " & url & " -host localhost " &_
 	"-port 9999 -threads " & maxthreads & " -useSingleSession " & singlesession 
 If (is_mode_nsca) Then 
+' NSCA Mode
 	command = command & " -initJS " & Chr(34) & "var $resultfile=" & Chr(39) & resultfile & Chr(39) & Chr(59) & Chr(34)
+Else 
+' DB Mode
+	command = command & " -initJS " & Chr(34) & "var $runid=" & Chr(39) & runid & Chr(39) & Chr(59) & Chr(34)
 End If
+'TODO FIXME 
 
 dbg "Calling Sahi command: '" & command & "'"
 Set Wshell = WScript.CreateObject("WScript.shell")
@@ -511,11 +516,11 @@ Sub about()
 		             "For any other settings see config section in this script. " & VbCrLf 
 End Sub
 
-Function get_jobid()
+Function get_runid()
 	Dim rdnum
 	Randomize
 	rdnum = Rnd
-	get_jobid = Int(rdnum * 1000000000) 
+	get_runid = Int(rdnum * 1000000000) 
 End Function 
 
 Sub EchoOut2DArray (arr)  

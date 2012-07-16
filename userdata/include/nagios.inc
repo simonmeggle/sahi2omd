@@ -9,11 +9,13 @@ function initialize($w, $c) {
 	} else {
 		$mode = "nsca";
 	};
+	
    //_alert($mode);
+   //_alert($resultfile);
    
    //$nagiosStartTime = Math.floor(new Date().getTime() / 1000).toString();
    $nagiosStartTime = (new Date().getTime() / 1000).toString();
-   _alert($nagiosStartTime);
+   //_alert($nagiosStartTime);
    _set($startURL, window.document.location.href);
    // Validierung der Thresholds
    if ($warn > 0 && $crit > 0 && $warn >= $crit) {
@@ -39,16 +41,21 @@ function step($stepname,$stepthreshold) {
 }
 
 function saveResult($msg) {
-   var $duration_result;
-   var $check_result;
+   var $case_duration_result;
+   var step_duration_result; 
+   var $case_result;
    var $total_result;
    var $nagiosStopTime = Math.floor(new Date().getTime() / 1000).toString();
    //var $duration = ($nagiosStopTime - $nagiosStartTime).toString(); 
    var $duration = ($nagiosStopTime - $nagiosStartTime).toFixed(2); 
-// 1. determine check_result
+   
+   if (is_mode_db) {
+		var db = _getDB("com.mysql.jdbc.Driver", "jdbc://localhost/sahi", "sahi", "sahi");
+   }
+// 1. Did we have exceptions? 
    if (ScriptRunner.hasErrors() > 0) {
        var $errmesg, $errmesg1, $errmesg2 = "";
-       $check_result = "2";      
+       $case_result = "2";      
        if ($msg) {
           // Splitten der Meldung über "\n" in ein Array. Die ersten beiden Zeilen
           // der error-Message sollten ausreichend sein (eine manuelle Exception
@@ -67,21 +74,23 @@ function saveResult($msg) {
           $errmesg = "";
        }    
        $msg = sprintf('ended with errors%s', $errmesg );
+// no script exceptions. 
+
    } else {
-       $check_result = "0"; 
-	   $msg = "" ;
-   }
-// 2. ok, we had no severe errors. Now check if durations are within thresholds. 
-// DBTODO: If we are in DB mode, we also check step durations. 
-	$duration_result = getduration_result($duration, $warn, $crit ); 
-	if ($check_result == 0 && $duration_result > 0) {
-	
-		$msg += sprintf('ended OK but exceeded runtime thresholds (warn at %d s, crit at %d s)',$warn, $crit); 
+// 2.1 Now check script duration
+		$case_duration_result = getcase_duration_result($duration, $warn, $crit ); 
+		if ($case_duration_result > 0) {
+			$msg += sprintf('ended OK but exceeded runtime thresholds (warn at %d s, crit at %d s)',$warn, $crit); 
+		} else {
+			$case_result = "0"; 
+			$msg = "" ;
+		}
 	}
 
+// 2.2 todo step duration
 // 3. determine worstState
 	
-   $total_result = getworststate($check_result, $duration_result);
+   $total_result = getworststate($case_result, $case_duration_result);
    _set($stopURL, window.document.location.href);
    _set($nagiosAgent, navigator.userAgent);
    // Agent description can contain semicolon, replace globally
@@ -91,13 +100,17 @@ function saveResult($msg) {
    if (_suiteInfo() ) {
 	 $suitename = _suiteInfo().suiteName;
 	}
-   write2CSV($suitename, $testname, $total_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
-   
-   	for (var $s in $steps) {
-		for (var $i in $steps[$s]) {
-			_alert ($s + ": " + $i + "= " + $steps[$s][$i]);
-		}
+	write2CSV($suitename, $testname, $total_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
+	if (is_mode_db() ) {
+		//write2DB($suitename, $testname, $total_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
+	} else {
+		write2CSV($suitename, $testname, $total_result, $duration, $warn, $crit, $msg, $nagiosAgent, $stopURL);
 	}
+   	// for (var $s in $steps) {
+		// for (var $i in $steps[$s]) {
+			// _alert ($s + ": " + $i + "= " + $steps[$s][$i]);
+		// }
+	// }
 }
 
 function getworststate ($cres, $durres) {
@@ -114,7 +127,7 @@ function getworststate ($cres, $durres) {
    return $ret; 
 }
 
-function getduration_result ($dur, $w, $c) {
+function getcase_duration_result ($dur, $w, $c) {
 // compares script runtime against thresholds
 // if thresholds are 0,0, OK is returned
 //_alert("dur=" + $dur + "warn=" + $w + "crit=" + $c );
@@ -139,6 +152,16 @@ function getstep_result ($dur, $threshold) {
 		$ret = "1";    
     } 
    return $ret;
+}
+
+function is_mode_db () {
+	if ($mode == "db") { 
+		//_alert("This is mode DB"); 
+		return true; 
+	} else { 
+		_alert("This is mode nsca!");
+		//return false; 
+	}
 }
 
 function write2CSV() {

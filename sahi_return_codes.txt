@@ -1,0 +1,11 @@
+Case-Stati: 
+
+Na		Sa
+2		3	CRITICAL 	= fatal: ended with errors (-> msg) 
+2		2	CRIT		= case exceeded runtime 
+1		2	WARN		= case exceeded runtime 
+1 		1	WARN 		= step exceeded runtime
+0		0	OK			= no error 
+
+
+
