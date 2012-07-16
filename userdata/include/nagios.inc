@@ -79,11 +79,16 @@ function saveResult($msg) {
 		// 2.1 Now case duration
 		$nsca_result = getcase_duration_result($duration, $warn, $crit ); 
 		if ($nsca_result > 0) {
+			//_alert("Checking NSCA result for case runtime.");
 			$msg += sprintf(', exceeded runtime (w: %d s, c: %d s)',$warn, $crit); 
 			switch ($nsca_result) {
-				case 1: $db_result = 3;
+				case "1":
+					_alert("NSCA result is WARNING");
+					$db_result = 2;
 					break;
-				case 2: $db_result = 2;
+				case "2": 
+					_alert("NSCA result is CRITICAL");
+					$db_result = 3;
 					break;
 			}
 		}
@@ -134,6 +139,7 @@ function write2CSV() {
 
 function getworststate ($cres, $durres) {
    var $max = Math.max($cres,$durres);
+   return $max; 
    var $ret; 
    switch ($max) {
       case 0: $ret = "0";
