@@ -8,7 +8,7 @@ Option Explicit
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
 Dim debug, version, FSObject, debugfile, objdebug
-Dim command,runid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
+Dim command,runuid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
 Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
 
  ' Überprüfung ob Sahi läuft
@@ -201,11 +201,13 @@ If (warning > critical) Then
 End If
 		
 
-runid = get_runid
+ runuid = get_runuid()
+
+
 
 If (is_mode_nsca) Then 
-	resultfile = sahi_results & "\\" & runid & "_sahitestdata.TMP"	
-	nscadatafile = sahi_results & "\\" & runid & "_nscadata.TMP"
+	resultfile = sahi_results & "\\" & runuid & "_sahitestdata.TMP"	
+	nscadatafile = sahi_results & "\\" & runuid & "_nscadata.TMP"
 	' check NSCA
 	filexistsOrDie send_nsca_bin, "NSCA binary " & send_nsca_bin & " could not be found!"
 	filexistsOrDie send_nsca_cfg, "NSCA config file " & send_nsca_cfg & " could not be found!"
@@ -231,7 +233,7 @@ If (is_mode_nsca) Then
 	command = command & " -initJS " & Chr(34) & "var $resultfile=" & Chr(39) & resultfile & Chr(39) & Chr(59) & Chr(34)
 Else 
 ' DB Mode
-	command = command & " -initJS " & Chr(34) & "var $runid=" & Chr(39) & runid & Chr(39) & Chr(59) & Chr(34)
+	command = command & " -initJS " & Chr(34) & "var $runuid=" & Chr(39) & runuid & Chr(39) & Chr(59) & Chr(34)
 End If
 'TODO FIXME 
 
@@ -516,12 +518,6 @@ Sub about()
 		             "For any other settings see config section in this script. " & VbCrLf 
 End Sub
 
-Function get_runid()
-	Dim rdnum
-	Randomize
-	rdnum = Rnd
-	get_runid = Int(rdnum * 1000000000) 
-End Function 
 
 Sub EchoOut2DArray (arr)  
   For i=0 To UBound(arr,1)  
@@ -551,4 +547,12 @@ Function is_mode_db()
 	Else 
 	  is_mode_db = True
 	End If
+End Function
+
+
+Function get_runuid()
+ 	Dim UpdateID, TypeLib
+	Set TypeLib = CreateObject("Scriptlet.TypeLib")
+	UpdateID = Trim(UCase(Mid(TypeLib.guid, 2, 36)))
+	get_runuid = UpdateID
 End Function
