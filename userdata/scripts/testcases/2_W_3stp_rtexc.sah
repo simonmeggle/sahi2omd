@@ -5,7 +5,7 @@ try {
 // (0,0) = kein Threshold
   initialize(35,45);
 
-_wait(3000); 
+_wait(2000); 
 step("Click auf Anmeldung in 3 Sekunden",1);   
 _wait(100);  
 step("Click auf Password in 4 Sekunden",3);

@@ -240,14 +240,13 @@ command = command & "var $mode=" & Chr(39) & mode & Chr(39) & Chr(59) & Chr(34)
 
 dbg "Now calling Sahi command: '" & command & "'"
 Set Wshell = WScript.CreateObject("WScript.shell")
-timestart = Timer
 Wshell.run command, 1, bWaitOnReturn
 Set Wshell = Nothing
-timeend = Timer
-runtime = Round(timeend-timestart,0)
+
 
 If (is_mode_db) Then
-		
+	' FIXME
+			
 Else
 	' check if NSCA result file was created
 	fileExistsOrDie resultfile, "sahi2omd.vbs cannot find the result file " & resultfile
@@ -275,10 +274,19 @@ Sub data2OMD (resultfile)
 	
 	If (expandsuite = "false") Then
 		' collect all tests as suite result
-		' TEST RESULTS
 		dbg "expandsuite is not set - this case/suite will be treated as a single nagios service..."
 		
-		For i=0 To UBound(arr_results,1)  
+		For i = 0 To UBound(arr_results, 1)  
+			' arr_results(n,0) = suitename
+			' arr_results(n,1) = casename
+			' arr_results(n,2) = case_result
+			' arr_results(n,3) = case_duration
+			' arr_results(n,4) = case_warn
+			' arr_results(n,5) = case_crit
+			' arr_results(n,6) = msg
+			' arr_results(n,7) = browser
+			' arr_results(n,8) = lastpage
+			
 			' do we have a suite? 
 			If (Abs(StrComp(arr_results(i,0), arr_results(i,1), 1))) Then
 				suite = arr_results(i,0)
@@ -286,16 +294,20 @@ Sub data2OMD (resultfile)
 			Else 
 				dbg "Suitename == Casename -> This Case did not run within a suite."
 			End If
-			output = output & state2str(arr_results(i,2)) & ": Sahi test " & Chr(39) & arr_results(i,1) & Chr(39) & _
+			output = output & state2str(arr_results(i,2)) & ": Case " & Chr(39) & arr_results(i,1) & Chr(39) & _
 				" (" & arr_results(i,3) & "s) " & arr_results(i,6) 
 			
+			' total runtime = runtime_case1 + runtime_case2 + ... 
+			runtime = runtime + CDbl(arr_results(i,3))
+			dbg("Total runtime is now: " & runtime)
 			currentstate = arr_results(i,2)
 			If (currentstate > worststate) Then
 				worststate = currentstate
 			End If
 			testcase = Left( arr_results(i,1), Len(arr_results(i,1))-4)
 	
-			perfdata = perfdata & testcase & "=" & arr_results(i,3) & "s;" & arr_results(i,4) & ";" & arr_results(i,5) & ";; "
+			perfdata = perfdata & testcase & "=" & arr_results(i, 3) & "s;" & arr_results(i, 4) & ";" & arr_results(i, 5) & ";; "
+			dbg("perfdata is now: " & perfdata)
 		Next 
 		' verify that each row of the csv file contains 8 elements
 		If ( UBound(arr_results,2) > 8) Then
@@ -311,14 +323,14 @@ Sub data2OMD (resultfile)
 		If ( Len(suite) > 0 ) Then
 			' if there are errors, we dont care for the total runtime!
 			If (worststate > 0) Then
-				output = state2str(worststate) & ": Sahi suite " & Chr(39) & suite & Chr(39) & _
-					" (overall " & runtime & "s) ended " & state2oknok(worststate) & " " & output 
+				output = state2str(worststate) & ": Suite " & Chr(39) & suite & Chr(39) & _
+					" (" & runtime & "s) ended " & state2oknok(worststate) & " " & output 
 			Else
 				durationresult = getduration_result(runtime, warning, critical)
 				If (durationresult > 0) Then
-					output = " exceeded runtime (warn: " & warning & ", crit: " & critical & ") " & output 
+					output = " beyond runtime (w: " & warning & ", c: " & critical & ") " & output 
 				End If			
-				output = state2str(durationresult) & ": Sahi suite " & Chr(39) & UCase(suite) & Chr(39) & " (overall " & runtime & " s) " & output
+				output = state2str(durationresult) & ": Suite " & Chr(39) & UCase(suite) & Chr(39) & " (" & runtime & " s) " & output
 			End If
 			check_command = "[check_sahi_suite]"
 			' if run in a suite, include total runtime in performance data

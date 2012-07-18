@@ -103,25 +103,27 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	   debug("Case had exception -> case_result = " + $case_result + ", msg = " + $msg);
     } else {
 		debug("Case had no exception, checking case and step runtimes...");
-		$msg = 'ended OK';
+		$msg = 'was ok';
 		// 2.1 Now case duration
 		$case_result = getcase_duration_result($duration, $warn, $crit ); 
 		if ($case_result > 0) {
-			$msg += sprintf(', case exceeded runtime (w: %d s, c: %d s)',$warn, $crit); 
+			$msg += sprintf(', case beyond runtime (w:%d, c:%d s)',$warn, $crit); 
 			debug("Case over runtime -> case_result = " + $case_result + ", msg = " + $msg);
 		}
-		// 2.2 todo step duration
+		// 2.2 step duration
 		debug("checking step runtimes...");
 		for (var $s in $steps) {
 			debug(str_repeat(" ",4 + $debug_indent) + "--- Step " + $s + ":");
 			var $step_result = getstep_result ($steps[$s]["duration"],$steps[$s]["threshold"]);			
 			if ($step_result > 0) { 
-				$msg += sprintf(', %s exceeded runtime (%0.2f s)', $s, $steps[$s]["duration"]);
+				$msg += sprintf(', %s beyond runtime (%0.2f s)', $s, $steps[$s]["duration"]);
 				debug(str_repeat(" ",4 + $debug_indent) + $s + "was over runtime");
 			}
 			$case_result = getworststate($case_result, $step_result);
 			debug(str_repeat(" ",4 + $debug_indent) + "new case_result = " + $case_result + ", msg = " + $msg);
-		}		
+		}	
+		$msg += " ";
+		
 	}
 	_set($lastpage, window.document.location.href);
 	_set($browser, navigator.userAgent);
@@ -144,7 +146,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	if (is_mode_db() ) {
 		write2DB()
 	} else {
-		write2CSV($suitename, $casename, $case_result.toString(), $duration, $warn.toString(), $crit.toString(), $msg, $browser, $lastpage);
+		write2CSV($suitename, $casename, $case_result.toString(), $duration.replace('.',','), $warn.toString(), $crit.toString(), $msg, $browser, $lastpage);
 	}
 $debug_indent--;
 }
