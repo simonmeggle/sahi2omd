@@ -263,7 +263,7 @@ dbg "Script ran in " & runtime & " seconds."
 
 ' helper functions -----------------------------------------------------------------------------------
 Sub data2OMD (resultfile)
-	Dim arr_results, i, j, worststate, currentstate, durationstate, durationresult, suite, perfdata, check_command, output, testcase
+	Dim arr_results, i, j, worststate, currentstate, durationstate, durationresult, suite, perfdata, check_command, output, case_shortname
 	worststate = 0
 	perfdata = ""
 	check_command = ""
@@ -304,9 +304,9 @@ Sub data2OMD (resultfile)
 			If (currentstate > worststate) Then
 				worststate = currentstate
 			End If
-			testcase = Left( arr_results(i,1), Len(arr_results(i,1))-4)
+			case_shortname = Left( arr_results(i,1), Len(arr_results(i,1))-4)
 	
-			perfdata = perfdata & testcase & "=" & arr_results(i, 3) & "s;" & arr_results(i, 4) & ";" & arr_results(i, 5) & ";; "
+			perfdata = perfdata & case_shortname & "=" & arr_results(i, 3) & "s;" & arr_results(i, 4) & ";" & arr_results(i, 5) & ";; "
 			dbg("perfdata is now: " & perfdata)
 		Next 
 		' verify that each row of the csv file contains 8 elements

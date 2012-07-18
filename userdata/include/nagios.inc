@@ -3,12 +3,14 @@ _include('sprintf.inc');
 function initialize($w, $c) {
 	$debug_indent = 0;
 	$casename = _scriptName();
+	$suitename = _suiteInfo().suiteName;
 	
-	if (_suiteInfo()) {
-		$suitename = _suiteInfo().suiteName;
+	if ($casename == $suitename) {
+		$suite = false; 
 	} else {
-		$suitename = $casename;
+		$suite = true;
 	}
+	
 	$debugfile = "..\\temp\\" + $runuid + "_" + $suitename + "_" + $casename + ".debug";
 	debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("This is Sahi Case " + $casename + " (Suite " + $suitename + ")");
@@ -16,12 +18,17 @@ function initialize($w, $c) {
 	$crit = $c;
 
     if (is_mode_db()){ 
-		
+		$db = _getDB("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/sahi", "sahi", "sahipw");
+		if (typeof($db) == 'object') {
+			debug("DB driver loaded.");
+		} else {
+			throw("ERROR: failed to load DB driver.");
+		}			
 	} else {
 		$resultfile = "..\\..\\temp\\" + $runuid + ".results";
 		debug("Result file is " + $resultfile);
 	}
-   
+	
    $nagiosStartTime = (new Date().getTime() / 1000).toString();
    debug("$nagiosStartTime = " + $nagiosStartTime);
    _set($startURL, window.document.location.href);
@@ -65,17 +72,10 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("got $msg = " + $msg);
    var $case_result = 0;
    var $db_result = 0;
-   var $nagiosStopTime = Math.floor(new Date().getTime() / 1000).toString();
+   var $nagiosStopTime = (new Date().getTime() / 1000).toString();
    var $duration = ($nagiosStopTime - $nagiosStartTime).toFixed(2); 
    debug("$nagiosStopTime = " + $nagiosStopTime + ", total case duration is " + $duration + " seconds.");
-   if ( is_mode_db() ) {
-		var $db = _getDB("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/sahi", "root", "");
-		if (typeof($db) == 'object') {
-			debug("DB driver loaded.");
-		} else {
-			throw("ERROR: failed to load DB driver.");
-		}		
-   }
+
    debug("Determing case status:");
    if (ScriptRunner.hasErrors() > 0) {
 	   // 1. Fatal exceptions? 
@@ -144,16 +144,48 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("------------------");
 	
 	if (is_mode_db() ) {
-		write2DB()
+		write2DB($suitename, $casename, $duration, $nagiosStartTime, $nagiosStopTime, $warn.toString(), $crit.toString(), $msg, $browser, $lastpage, $runuid)
 	} else {
 		write2CSV($suitename, $casename, $case_result.toString(), $duration.replace('.',','), $warn.toString(), $crit.toString(), $msg, $browser, $lastpage);
 	}
 $debug_indent--;
 }
 
-function write2DB() {
+function write2DB($suitename, $casename, $duration, $nagiosStartTime, $nagiosStopTime,$warn, $crit, $msg, $browser, $lastpage, $runuid) {
+//		testcase1-4.suite, 1_OK_3stp_ok.sah, 35, 45, 1,81, NaN, NaN, http://oxid/shop/, 1271BFEB-20FB-45D6-BC30-13D7C746BDC8, undefined, undefined
+// ugly: $steps is not an argument
 $debug_indent++;
-	//TODO
+debug("========= function '" + arguments.callee.name + "' ===================");
+	debug("got args: " + $suitename+", "+$casename+", "+$duration+", "+$nagiosStartTime+", "+$nagiosStopTime +", "+parseInt($warn)+", "+parseInt($crit)+", "+$msg+", "+$browser+", "+$lastpage+", "+$runuid);
+	var $stmt, $dbres, $suite_id;
+	$suite_id = 'NULL'
+	// if suite: write save once
+	if ($suite) {
+		debug("Storing Suite Info in DB...");
+		$stmt = "SELECT COUNT(*) AS count FROM sahi_suites where guid = '" + $runuid + "'";
+		$dbres = $db.select($stmt);
+		if ($dbres[0]['count'] == 0) {
+			$stmt = sprintf("INSERT INTO sahi_suites (name, guid, warning, critical) VALUES ('%s','%s','%d', '%d')",
+				$suitename, $runuid, $warn, $crit);
+			debug("SQL: " + $stmt);
+			$db.update($stmt);
+		}
+		$stmt = "SELECT MAX(id) AS suite_id from sahi_suites";
+		debug("SQL: " + $stmt)
+		$dbres = $db.select($stmt);
+		$suite_id = $dbres[0]['suite_id'];
+		debug("Suite stored under ID " + $suite_id);
+	}
+	// Schreibe Case-Tabelle mit FK Suite
+	debug("Storing Case Info in DB...");
+	$stmt = sprintf("INSERT INTO sahi_cases (name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration)" + 
+		"VALUES ('%s','%s','%s','%s','%d','%d','%s','%s','%d','%0.2f')",
+		$casename, $runuid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage,$suite_id, $duration);
+	debug("SQL: " + $stmt);
+	$dbres = $db.update($stmt);
+	// Schreibe Step-Tabelle mit FK Case
+	
+	var $sql = 
 $debug_indent--;	
 }
 
