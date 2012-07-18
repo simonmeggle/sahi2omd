@@ -1,13 +1,13 @@
 Option Explicit
 
-' -m 1 -f oxid\login_logout.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s login_logout
+' -m 1 -f oxid\login_logout.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
 
-' -m 1 -f oxid\loginandbuy.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s loginandbuy
-' -mode nsca -m 1 -f oxid\loginandbuy.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s loginandbuy
+' -m 1 -f oxid\loginandbuy.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
+' -mode nsca -m 1 -f oxid\loginandbuy.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
 
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
-Dim debug, version, FSObject, debugfile, objdebug
+Dim debug, version, FSObject, debugfile, objdebug, mysql_connector
 Dim command,runuid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
 Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
 
@@ -40,10 +40,14 @@ send_nsca_port = 5667
 sahi2omd_cfg = sahi_userdata & "\sahi2omd.cfg"
 ' Debug File 
 debugfile = sahi_userdata & "\temp\sahi2omd.log"
+' MySQL Connector; if you use mode 'mysql' this (or a newer) driver has to be present
+mysql_connector = sahi_home & "\extlib\db\mysql-connector-java-5.1.21-bin.jar"
 
 ' ##############################################################################
 ' Don't change anything below
 ' ##############################################################################
+
+' MAIN =====================================================================================
 helpstring = "Get help with parameter /?."
 
 Set FSObject = CreateObject("Scripting.FileSystemObject")
@@ -52,8 +56,7 @@ If debug = 1 Then
 	Set objdebug = FSObject.CreateTextFile(debugfile, True)	
 End If 
 
-dbg "----------------------------------------"
-dbg "Script started..."
+dbg "Sahi2OMD.vbs started..."
 dbg "Parsing Arguments..."
 Do While i < WScript.Arguments.Count
 	If WScript.Arguments(i) = "/?" Or WScript.Arguments(i) = "-?" Then
@@ -200,43 +203,42 @@ If (warning > critical) Then
 	WScript.quit(1)
 End If
 		
+runuid = get_runuid()
 
- runuid = get_runuid()
-
-
-
+' Health checks
 If (is_mode_nsca) Then 
 	resultfile = sahi_results & "\\" & runuid & ".results"	
 	nscadatafile = sahi_results & "\\" & runuid & ".nsca"
 	' check NSCA
-	filexistsOrDie send_nsca_bin, "NSCA binary " & send_nsca_bin & " could not be found!"
-	filexistsOrDie send_nsca_cfg, "NSCA config file " & send_nsca_cfg & " could not be found!"
+	fileExistsOrDie send_nsca_bin, "NSCA binary " & send_nsca_bin & " could not be found!"
+	fileExistsOrDie send_nsca_cfg, "NSCA config file " & send_nsca_cfg & " could not be found!"
+Else
+	fileExistsOrDie mysql_connector, "sahi2omd.vbs was called with mode 'db', but no MySQL Connector file was found." & _
+		"Please specify the correct mysql_connector in the config section of sahi2omd.vbs." 
 End If 
 
-
-dbg "Check if Sahi is running..."
 If Not sahirunning Then
-	die 3, "UNKNOWN: Sahi does not run. Verify that Sahi is started and ready to run the tests. "  & helpstring
+	dbg "ERROR: Sahi does not run. Exiting. "
+	die "UNKNOWN: Sahi does not run. Verify that Sahi is started and ready to run the tests. "  & helpstring, 3
+Else
+	dbg "Sahi is running properly. "
 End If
-dbg "...yes."
+
 
 ' check if Sahi Suite / Case File is present
-filexistsOrDie sahi_scripts & "\" & file, "Sahi Test/Suite file " & sahi_scripts & "\" & file & " could not be found! "  & helpstring
+fileExistsOrDie sahi_scripts & "\" & file, "Sahi Test/Suite file " & sahi_scripts & "\" & file & " could not be found! "  & helpstring
 
 
 ' RUN TESTS  -----------------------------------------------------------------------------------
 command = "java -cp " & sahi_home & "\lib\ant-sahi.jar net.sf.sahi.test.TestRunner -test " &  _
 	sahi_scripts & "\" & file & " -browserType " & browser & " -baseURL " & url & " -host localhost " &_
 	"-port 9999 -threads " & maxthreads & " -useSingleSession " & singlesession 
-
 ' add runuid
 command = command & " -initJS " & Chr(34) & "var $runuid=" & Chr(39) & runuid & Chr(39) & Chr(59)
-
-' add working mode variable
+' add working mode variable (db/nsca)
 command = command & "var $mode=" & Chr(39) & mode & Chr(39) & Chr(59) & Chr(34)
 
-
-dbg "Calling Sahi command: '" & command & "'"
+dbg "Now calling Sahi command: '" & command & "'"
 Set Wshell = WScript.CreateObject("WScript.shell")
 timestart = Timer
 Wshell.run command, 1, bWaitOnReturn
@@ -244,18 +246,23 @@ Set Wshell = Nothing
 timeend = Timer
 runtime = Round(timeend-timestart,0)
 
+If (is_mode_db) Then
+		
+Else
+	' check if NSCA result file was created
+	fileExistsOrDie resultfile, "sahi2omd.vbs cannot find the result file " & resultfile
+
+	' read TMP-resultfile and send the data to OMD (or DB... todo)
+	dbg "Now reading in result file " & resultfile & " ..."
+	data2OMD(resultfile)
+
+	Set FSObject = Nothing
+End If
+
 dbg "Script ran in " & runtime & " seconds."
+' End MAIN ==========================================================================================
 
-' check if result file was created
-filexistsOrDie resultfile, "sahi2omd.vbs cannot find the result file " & resultfile
-
-' read TMP-resultfile and send the data to OMD (or DB... todo)
-dbg "Now reading in result file " & resultfile & " ..."
-data2OMD(resultfile)
-dbg "Script ended."
-dbg "--------------------------------"
-Set FSObject = Nothing
-
+' helper funcions -----------------------------------------------------------------------------------
 Sub data2OMD (resultfile)
 	Dim arr_results, i, j, worststate, currentstate, durationstate, durationresult, suite, perfdata, check_command, output, testcase
 	worststate = 0
@@ -292,11 +299,11 @@ Sub data2OMD (resultfile)
 		Next 
 		' verify that each row of the csv file contains 8 elements
 		If ( UBound(arr_results,2) > 8) Then
-			die 3, "After test execution, an error occurred while reading in the sahi result data file: " & _
-				"Found more than 8 elements in one row; check " & resultfile & "."
+			die "After test execution, an error occurred while reading in the sahi result data file: " & _
+				"Found more than 8 elements in one row; check " & resultfile & ".",3
 		ElseIf ( UBound(arr_results,2) < 8) Then
-			die 3, "After test execution, an error occurred while reading in the sahi result data file: " & _
-				"Found less than 8 elements in one row; check " & resultfile & "."
+			die "After test execution, an error occurred while reading in the sahi result data file: " & _
+				"Found less than 8 elements in one row; check " & resultfile & ".",3
 		End If 
 		check_command = "[check_sahi_case]"
 		
@@ -347,7 +354,7 @@ Sub printConfiguration (inhostname, inservice)
 End Sub
 
 Sub send2NSCA (inhostname, inservice, instatus, inoutput, inperfdata, innagios)
-	dbg "Now sending data to OMD..."
+	dbg "Sending NSCA data to OMD..."
 	Dim command, objFile, nscadata, Wshell, delim
 	Set objFile = FSObject.CreateTextFile(nscadatafile, True)
 	' if we send an error message, we dont need perfdata
@@ -368,14 +375,16 @@ Sub send2NSCA (inhostname, inservice, instatus, inoutput, inperfdata, innagios)
 	Set objFile = Nothing
 End Sub 
 
-Sub filexistsOrDie(infile, InStr)
+Sub fileExistsOrDie(infile, InStr)
 	If Not FSObject.FileExists(infile) Then
-		die 3, "UNKNOWN: " & InStr
+		die "UNKNOWN: " & InStr, 3
 	End If
 End Sub
 
-Sub die(instate, inmsg)
-	send2NSCA hostname, service, instate, inmsg, "", nagios
+Sub die(inmsg, instate)
+	If (is_mode_nsca) Then
+		send2NSCA hostname, service, instate, inmsg, "", nagios	
+	End If
 	WScript.echo inmsg
 	WScript.quit
 End Sub
