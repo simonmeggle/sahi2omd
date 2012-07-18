@@ -1,5 +1,5 @@
 _include('../../include/nagios.inc');
-
+debug = true; 
 try {
 // Parameter 1/2: warning/critical-Schwellwerte für diesen Testcase
 // (0,0) = kein Threshold

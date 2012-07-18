@@ -235,8 +235,10 @@ function debugfunc() {
 }
 
 function debug($message) {
-	var $space = str_repeat(" ", $debug_indent * 4);
-	_debugToFile($space + $message, $debugfile);
+	if ($debug) {
+		var $space = str_repeat(" ", $debug_indent * 4);
+		_debugToFile($space + $message, $debugfile);
+	}
 }
 
 function str_repeat (input, multiplier) {
