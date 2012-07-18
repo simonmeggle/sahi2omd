@@ -158,7 +158,7 @@ $debug_indent++;
 debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("got args: " + $suitename+", "+$casename+", "+$duration+", "+$nagiosStartTime+", "+$nagiosStopTime +", "+parseInt($warn)+", "+parseInt($crit)+", "+$msg+", "+$browser+", "+$lastpage+", "+$runuid);
 	var $stmt, $dbres, $suite_id;
-	$suite_id = 'NULL'
+	$suite_id = "NULL";
 	// if suite: write save once
 	if ($suite) {
 		debug("Storing Suite Info in DB...");
@@ -176,11 +176,11 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 		$suite_id = $dbres[0]['suite_id'];
 		debug("Suite stored under ID " + $suite_id);
 	}
-	// Schreibe Case-Tabelle mit FK Suite
+	// write Case table
 	debug("Storing Case Info in DB...");
 	$stmt = sprintf("INSERT INTO sahi_cases (name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration)" + 
-		"VALUES ('%s','%s','%s','%s','%d','%d','%s','%s','%d','%0.2f')",
-		$casename, $runuid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage,$suite_id, $duration);
+		"VALUES ('%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f')",
+		$casename, $runuid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration);
 	debug("SQL: " + $stmt);
 	$dbres = $db.update($stmt);
 	// Schreibe Step-Tabelle mit FK Case
