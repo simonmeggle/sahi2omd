@@ -16,10 +16,10 @@ function initialize($w, $c) {
 	$crit = $c;
 
     if (is_mode_db()){ 
-		debug("Called in DB mode.");
+		
 	} else {
 		$resultfile = "..\\..\\temp\\" + $runuid + ".results";
-		debug("Called in NSCA mode; result file is " + $resultfile);
+		debug("Result file is " + $resultfile);
 	}
    
    $nagiosStartTime = (new Date().getTime() / 1000).toString();
@@ -69,12 +69,12 @@ debug("========= function '" + arguments.callee.name + "' ===================");
    var $duration = ($nagiosStopTime - $nagiosStartTime).toFixed(2); 
    debug("$nagiosStopTime = " + $nagiosStopTime + ", total case duration is " + $duration + " seconds.");
    if ( is_mode_db() ) {
-		var db = _getDB("com.mysql.jdbc.Driver", "jdbc://localhost/sahi", "sahi", "sahi");
-		if (typeof($db) !== 'undefined') {
+		var $db = _getDB("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/sahi", "root", "");
+		if (typeof($db) == 'object') {
 			debug("DB driver loaded.");
 		} else {
 			throw("ERROR: failed to load DB driver.");
-		}
+		}		
    }
    debug("Determing case status:");
    if (ScriptRunner.hasErrors() > 0) {
@@ -142,7 +142,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("------------------");
 	
 	if (is_mode_db() ) {
-		//
+		write2DB()
 	} else {
 		write2CSV($suitename, $casename, $case_result.toString(), $duration, $warn.toString(), $crit.toString(), $msg, $browser, $lastpage);
 	}

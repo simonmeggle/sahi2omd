@@ -1,9 +1,9 @@
 Option Explicit
+' NSCA
+' -mode nsca -m 1 -f testcases\testcase1_OK_3steps_allok.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
+' DB
+' -mode db -m 1 -f testcases\testcase1_OK_3steps_allok.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
 
-' -m 1 -f oxid\login_logout.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
-
-' -m 1 -f oxid\loginandbuy.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
-' -mode nsca -m 1 -f oxid\loginandbuy.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
 
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
@@ -262,7 +262,7 @@ End If
 dbg "Script ran in " & runtime & " seconds."
 ' End MAIN ==========================================================================================
 
-' helper funcions -----------------------------------------------------------------------------------
+' helper functions -----------------------------------------------------------------------------------
 Sub data2OMD (resultfile)
 	Dim arr_results, i, j, worststate, currentstate, durationstate, durationresult, suite, perfdata, check_command, output, testcase
 	worststate = 0
