@@ -1,0 +1,8 @@
+initialize: w/c wird später durch warn/crit dargestellt, unfug
+
+globale vars von lokalen trennen!
+
+
+guid muss überall gleich heißen _> runuid (auch in DB!)
+
+Wenn nagios.inc im DB mode eine nsca-Datei zurücklässt, ist dies eine Fehlermeldung, die passiv an Naigos gehen soll. 
