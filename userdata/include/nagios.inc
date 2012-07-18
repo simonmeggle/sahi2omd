@@ -50,8 +50,8 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	$stepcount++;
 	debug("Step #" + $stepcount + " (" + $stepname + "); duration " + $stepduration + " seconds" );
 	$steps["step " + $stepcount + ": '" +$stepname+"'"] = {};
-	$steps["step " + $stepcount + ": '" +$stepname+"'"]["duration"] = $stepduration;
-	$steps["step " + $stepcount + ": '" +$stepname+"'"]["threshold"]  = $stepthreshold;
+	$steps["step " + $stepcount + ": '" +$stepname+"'"].duration = $stepduration;
+	$steps["step " + $stepcount + ": '" +$stepname+"'"].threshold  = $stepthreshold;
 	
 	$stepstart = $now; 
 $debug_indent--;
