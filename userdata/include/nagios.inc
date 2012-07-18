@@ -1,25 +1,26 @@
 _include('sprintf.inc');
 
 function initialize($w, $c) {
-$debug_indent = 0;
-debug("========= function '" + arguments.callee.name + "' ===================");
+	$debug_indent = 0;
 	$casename = _scriptName();
-	if (_suiteInfo() ) {
+	
+	if (_suiteInfo()) {
 		$suitename = _suiteInfo().suiteName;
 	} else {
 		$suitename = $casename;
 	}
+	$debugfile = "..\\temp\\" + $runuid + "_" + $suitename + "_" + $casename + ".debug";
+	debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("This is Sahi Case " + $casename + " (Suite " + $suitename + ")");
-   $warn = $w;
-   $crit = $c;
+	$warn = $w;
+	$crit = $c;
 
-   if (typeof($resultfile) == "undefined") { 
+    if (is_mode_db()){ 
 		debug("Called in DB mode.");
-		$mode = "db";
 	} else {
+		$resultfile = "..\\..\\temp\\" + $runuid + ".results";
 		debug("Called in NSCA mode; result file is " + $resultfile);
-		$mode = "nsca";
-	};
+	}
    
    $nagiosStartTime = (new Date().getTime() / 1000).toString();
    debug("$nagiosStartTime = " + $nagiosStartTime);
@@ -70,9 +71,9 @@ debug("========= function '" + arguments.callee.name + "' ===================");
    if ( is_mode_db() ) {
 		var db = _getDB("com.mysql.jdbc.Driver", "jdbc://localhost/sahi", "sahi", "sahi");
 		if (typeof($db) !== 'undefined') {
-			debug("DB driver loaded.")
+			debug("DB driver loaded.");
 		} else {
-			throw("ERROR: failed to load DB driver.")
+			throw("ERROR: failed to load DB driver.");
 		}
    }
    debug("Determing case status:");
@@ -106,7 +107,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 		// 2.1 Now case duration
 		$case_result = getcase_duration_result($duration, $warn, $crit ); 
 		if ($case_result > 0) {
-			$msg += sprintf(', exceeded runtime (w: %d s, c: %d s)',$warn, $crit); 
+			$msg += sprintf(', case exceeded runtime (w: %d s, c: %d s)',$warn, $crit); 
 			debug("Case over runtime -> case_result = " + $case_result + ", msg = " + $msg);
 		}
 		// 2.2 todo step duration
@@ -215,6 +216,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 
 function is_mode_db () {
 $debug_indent++;
+
 debug("========= function '" + arguments.callee.name + "' ===================");
 	var $ret;
 	if ($mode == "db") { 
@@ -234,7 +236,7 @@ function debugfunc() {
 
 function debug($message) {
 	var $space = str_repeat(" ", $debug_indent * 4);
-	_debugToFile($space + $message, $resultfile + '.debug');
+	_debugToFile($space + $message, $debugfile);
 }
 
 function str_repeat (input, multiplier) {

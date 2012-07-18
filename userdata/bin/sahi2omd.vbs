@@ -206,8 +206,8 @@ End If
 
 
 If (is_mode_nsca) Then 
-	resultfile = sahi_results & "\\" & runuid & "_sahitestdata.TMP"	
-	nscadatafile = sahi_results & "\\" & runuid & "_nscadata.TMP"
+	resultfile = sahi_results & "\\" & runuid & ".results"	
+	nscadatafile = sahi_results & "\\" & runuid & ".nsca"
 	' check NSCA
 	filexistsOrDie send_nsca_bin, "NSCA binary " & send_nsca_bin & " could not be found!"
 	filexistsOrDie send_nsca_cfg, "NSCA config file " & send_nsca_cfg & " could not be found!"
@@ -228,14 +228,13 @@ filexistsOrDie sahi_scripts & "\" & file, "Sahi Test/Suite file " & sahi_scripts
 command = "java -cp " & sahi_home & "\lib\ant-sahi.jar net.sf.sahi.test.TestRunner -test " &  _
 	sahi_scripts & "\" & file & " -browserType " & browser & " -baseURL " & url & " -host localhost " &_
 	"-port 9999 -threads " & maxthreads & " -useSingleSession " & singlesession 
-If (is_mode_nsca) Then 
-' NSCA Mode
-	command = command & " -initJS " & Chr(34) & "var $resultfile=" & Chr(39) & resultfile & Chr(39) & Chr(59) & Chr(34)
-Else 
-' DB Mode
-	command = command & " -initJS " & Chr(34) & "var $runuid=" & Chr(39) & runuid & Chr(39) & Chr(59) & Chr(34)
-End If
-'TODO FIXME 
+
+' add runuid
+command = command & " -initJS " & Chr(34) & "var $runuid=" & Chr(39) & runuid & Chr(39) & Chr(59)
+
+' add working mode variable
+command = command & "var $mode=" & Chr(39) & mode & Chr(39) & Chr(59) & Chr(34)
+
 
 dbg "Calling Sahi command: '" & command & "'"
 Set Wshell = WScript.CreateObject("WScript.shell")
@@ -248,7 +247,7 @@ runtime = Round(timeend-timestart,0)
 dbg "Script ran in " & runtime & " seconds."
 
 ' check if result file was created
-filexistsOrDie resultfile, "Cannot find the result file " & resultfile
+filexistsOrDie resultfile, "sahi2omd.vbs cannot find the result file " & resultfile
 
 ' read TMP-resultfile and send the data to OMD (or DB... todo)
 dbg "Now reading in result file " & resultfile & " ..."
@@ -276,7 +275,9 @@ Sub data2OMD (resultfile)
 			' do we have a suite? 
 			If (Abs(StrComp(arr_results(i,0), arr_results(i,1), 1))) Then
 				suite = arr_results(i,0)
-				dbg "This seems to be a suite " & suite
+				dbg "Suitename != Casename -> This Case ran within suite " & suite
+			Else 
+				dbg "Suitename == Casename -> This Case did not run within a suite."
 			End If
 			output = output & state2str(arr_results(i,2)) & ": Sahi test " & Chr(39) & arr_results(i,1) & Chr(39) & _
 				" (" & arr_results(i,3) & "s) " & arr_results(i,6) 
@@ -356,7 +357,7 @@ Sub send2NSCA (inhostname, inservice, instatus, inoutput, inperfdata, innagios)
 		delim = "|"
 	End If
 	nscadata = inhostname & Chr(44) & inservice & Chr(44) & instatus & Chr(44) & inoutput & delim & inperfdata & Chr(13) & Chr(10)
-	dbg "NSCAdata are :" & nscadata
+	dbg "NSCAdata are: " & nscadata
 	objFile.Write nscadata
 	objFile.Close
 	command = "cmd /c < " & nscadatafile & " " & send_nsca_bin & " -H " & innagios & " -p " & send_nsca_port & " -c " & send_nsca_cfg & " -d ,"
@@ -436,7 +437,7 @@ Function state2oknok (instate)
 End Function	
 	
 Function ReadDataToArray (filename) 
- dbg "Reading in data from result file " & filename & "..."
+ 
  Dim objFSO, result, i, j, n, strLine, infile
   Set objFSO = CreateObject("Scripting.FileSystemObject")    
   result = Array ()  
