@@ -16,7 +16,15 @@ _wait(3000);
 
 // //Anmeldung am Shop
  _assertExists(_link("Anmelden"));
-
+_assert(_isVisible(_link("Anmelden")));
+_click(_link("Anmelden"));
+_click(_textbox("lgn_usr[1]"));
+_setValue(_textbox("lgn_usr[1]"), "sahimon.itoring@googlemail.com");
+_highlight(_password("lgn_pwd"));
+_click(_password("lgn_pwd"));
+_setValue(_password("lgn_pwd"), "sahimon");
+_highlight(_submit("Anmelden"));
+_click(_submit("Anmelden"));
 
  } catch($error) {
     _logExceptionAsFailure($error) 

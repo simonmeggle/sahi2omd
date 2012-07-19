@@ -1,19 +1,22 @@
 _include('../../include/nagios.inc');
 
 $debug = true;
+
 try {
 // Parameter 1/2: warning/critical-Schwellwerte für diesen Testcase
 // (0,0) = kein Threshold
-  initialize(3,20);
+  initialize(35,45);
 
-_wait(2000); 
-step("Click auf Anmeldung in 3 Sekunden",1);   
+throw("Etwas schlimmes ist passiert!!!")
+  
+_wait(100); 
+step("Click auf Anmeldung in 3 Sekunden",2);   
 _wait(100);  
 step("Click auf Password in 4 Sekunden",3);
 _wait(100);  
 step("Click auf Anmeldelink in 2 Sekunden",3);
 
-_wait(3500);
+
 
 // //Anmeldung am Shop
  _assertExists(_link("Anmelden"));
@@ -26,7 +29,6 @@ _click(_password("lgn_pwd"));
 _setValue(_password("lgn_pwd"), "sahimon");
 _highlight(_submit("Anmelden"));
 _click(_submit("Anmelden"));
-
  } catch($error) {
     _logExceptionAsFailure($error) 
     $output = $error['message'];

@@ -56,9 +56,9 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	var $stepduration = ($now - $stepstart).toFixed(2);
 	$stepcount++;
 	debug("Step #" + $stepcount + " (" + $stepname + "); duration " + $stepduration + " seconds" );
-	$steps["step " + $stepcount + ": '" +$stepname+"'"] = {};
-	$steps["step " + $stepcount + ": '" +$stepname+"'"].duration = $stepduration;
-	$steps["step " + $stepcount + ": '" +$stepname+"'"].threshold  = $stepthreshold;
+	$steps["step " + $stepcount + ": " +$stepname] = {};
+	$steps["step " + $stepcount + ": " +$stepname].duration = $stepduration;
+	$steps["step " + $stepcount + ": " +$stepname].threshold  = $stepthreshold;
 	
 	$stepstart = $now; 
 $debug_indent--;
@@ -82,6 +82,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	   
        var $errmesg, $errmesg1, $errmesg2 = "";   
        if ($msg) {
+			debug("Original msg: " + $msg);
           // Splitten der Meldung über "\n" in ein Array. Die ersten beiden Zeilen
           // der error-Message sollten ausreichend sein (eine manuelle Exception
           // enthält nur eine Zeile, das zweite Array-Element ist somit leer)
@@ -107,7 +108,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 		// 2.1 Now case duration
 		$case_result = getcase_duration_result($duration, $warn, $crit ); 
 		if ($case_result > 0) {
-			$msg += sprintf(', case beyond runtime (w:%d, c:%d s)',$warn, $crit); 
+			$msg += sprintf(', case beyond runtime (%0.2f/%d/%d s)',$duration,$warn,$crit); 
 			debug("Case over runtime -> case_result = " + $case_result + ", msg = " + $msg);
 		}
 		// 2.2 step duration
@@ -116,7 +117,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 			debug(str_repeat(" ",4 + $debug_indent) + "--- Step " + $s + ":");
 			var $step_result = getstep_result ($steps[$s]["duration"],$steps[$s]["threshold"]);			
 			if ($step_result > 0) { 
-				$msg += sprintf(', %s beyond runtime (%0.2f s)', $s, $steps[$s]["duration"]);
+				$msg += sprintf(', %s beyond runtime (%0.2f/%d s)', $s, $steps[$s]["duration"],$steps[$s]["threshold"]);
 				debug(str_repeat(" ",4 + $debug_indent) + $s + "was over runtime");
 			}
 			$case_result = getworststate($case_result, $step_result);
@@ -161,31 +162,49 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	$suite_id = "NULL";
 	// if suite: write save once
 	if ($suite) {
-		debug("Storing Suite Info in DB...");
+		debug("Searching for a suite with this runuid....");
 		$stmt = "SELECT COUNT(*) AS count FROM sahi_suites where guid = '" + $runuid + "'";
+		debug("SQL: " + $stmt);
 		$dbres = $db.select($stmt);
+		debug("...found " + $dbres + " suite entries.");
 		if ($dbres[0]['count'] == 0) {
+			debug("Creating suite entry:");
 			$stmt = sprintf("INSERT INTO sahi_suites (name, guid, warning, critical) VALUES ('%s','%s','%d', '%d')",
 				$suitename, $runuid, $warn, $crit);
 			debug("SQL: " + $stmt);
 			$db.update($stmt);
 		}
+		debug("Fetching suite id:");
 		$stmt = "SELECT MAX(id) AS suite_id from sahi_suites";
 		debug("SQL: " + $stmt)
 		$dbres = $db.select($stmt);
 		$suite_id = $dbres[0]['suite_id'];
-		debug("Suite stored under ID " + $suite_id);
+		debug("got suite ID " + $suite_id);
 	}
 	// write Case table
 	debug("Storing Case Info in DB...");
-	$stmt = sprintf("INSERT INTO sahi_cases (name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration)" + 
-		"VALUES ('%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f')",
-		$casename, $runuid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration);
+	$stmt = sprintf("INSERT INTO sahi_cases (name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration,msg)" + 
+		"VALUES ('%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f','%s')",
+		$casename, $runuid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg);
 	debug("SQL: " + $stmt);
 	$dbres = $db.update($stmt);
-	// Schreibe Step-Tabelle mit FK Case
 	
-	var $sql = 
+	$stmt = "SELECT MAX(id) AS case_id from sahi_cases";
+	debug("SQL: " + $stmt)
+	$dbres = $db.select($stmt);
+	$case_id = $dbres[0]['case_id'];
+	debug("Case stored under ID " + $case_id);
+	
+	// write Step table
+	debug("Storing Step Info in DB...");
+	for (var $s in $steps) {
+		debug(str_repeat(" ",4 + $debug_indent) + "--- Step " + $s + ":");
+		$stmt = sprintf("INSERT INTO sahi_steps (name, warning, sahi_cases_id, duration)" + 
+			"VALUES ('%s','%s','%d','%0.2f')",
+			$s,$steps[$s]["threshold"], parseInt($case_id), $steps[$s]["duration"]);
+		debug("SQL: " + $stmt);
+		$db.update($stmt);	
+	}	
 $debug_indent--;	
 }
 
