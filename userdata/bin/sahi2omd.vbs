@@ -513,7 +513,7 @@ Sub about()
 		             "        [-s <servicedescription>] [-z ] [-m <maxsessions> ] [-e] [-p]" & VbCrLf & _					 
 		             "" & VbCrLf & _
 		             "Parameters:" & VbCrLf & _
-					 "-mode   nsca: send results via NSCA, db: save results in local daabase." & VbCrLf & _
+					 "-mode   nsca: send results via NSCA, db: save results in local database." & VbCrLf & _
 		             "-f      Sahi test case (.sah) or test suite (.suite) file. " & VbCrLf & _
 		             "        Relative to sahi_scripts (see config config section in this script)" & VbCrLf & _
 		             "        e.g. '-f intranet\instranet_login.sah" & VbCrLf & _
