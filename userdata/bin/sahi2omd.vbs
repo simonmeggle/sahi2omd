@@ -2,10 +2,11 @@ Option Explicit
 ' NSCA
 ' -mode nsca -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
 ' DB
+' -mode db -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
 
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
-Dim debug, version, FSObject, debugfile, objdebug, mysql_connector
+Dim debug, version, FSObject, debugfile, objdebug, mysql_connector,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
 Dim command,runuid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
 Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
 
@@ -38,8 +39,19 @@ send_nsca_port = 5667
 sahi2omd_cfg = sahi_userdata & "\sahi2omd.cfg"
 ' Debug File 
 debugfile = sahi_userdata & "\temp\sahi2omd.log"
+' MySQL Hostname
+mysql_host = "localhost"
+' MySQL Sahi Database Name
+mysql_dbname = "sahi"
+' MySQL ODBC Driver 
+mysql_odbcdriver = "MySQL ODBC 5.1 Driver"
 ' MySQL Connector; if you use mode 'mysql' this (or a newer) driver has to be present
 mysql_connector = sahi_home & "\extlib\db\mysql-connector-java-5.1.21-bin.jar"
+' MySQL user
+mysql_user = "sahi"
+' MySQL password
+mysql_password = "sahimon"
+
 
 ' ##############################################################################
 ' Don't change anything below
@@ -190,6 +202,8 @@ End If
 		
 runuid = get_runuid()
 
+store_runid runuid,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
+
 ' Health checks
 If (is_mode_nsca) Then 
 	nsca_health_or_die
@@ -208,7 +222,6 @@ End If
 ' check if Sahi Suite / Case File is present
 file_Exists_OrDie sahi_scripts & "\" & file, "Sahi Test/Suite file " & sahi_scripts & "\" & file & " could not be found! "  & helpstring
 
-
 ' RUN TESTS  -----------------------------------------------------------------------------------
 command = "java -cp " & sahi_home & "\lib\ant-sahi.jar net.sf.sahi.test.TestRunner -test " &  _
 	sahi_scripts & "\" & file & " -browserType " & browser & " -baseURL " & url & " -host localhost " &_
@@ -225,8 +238,11 @@ Set Wshell = Nothing
 
 
 If (is_mode_db) Then
-	' FIXME & debug meldugn
-			
+	' FIXME & debug meldu
+	' runid is stored in the very end of each run. This is to prevent check_mysql_health on the Nagios
+	' side to read out suite/case results while the whole suite/case is still running.
+	dbg "...all Sahi cases were executed. Storing ID of this run (" & runuid & ") into database."
+	store_runid runuid,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
 Else
 	' check if NSCA result file was created
 	file_Exists_OrDie resultfile, "sahi2omd.vbs cannot find the result file " & resultfile
@@ -621,3 +637,20 @@ Function get_runuid()
 	UpdateID = Trim(UCase(Mid(TypeLib.guid, 2, 36)))
 	get_runuid = UpdateID
 End Function
+
+Function store_runid(runid,user,pwd,host,db,driver )
+	Dim rec_count, myconn, connection, result,sql	
+'	On Error Resume Next
+	Set myconn = CreateObject("adodb.connection")
+	
+	connection = "driver={" & mysql_odbcdriver & "};server=" & host & ";uid=" & user & ";Pwd=" & pwd & ";database=" & db
+	myconn.open (connection)
+	Set result = CreateObject("adodb.recordset")
+	sql = "insert into sahi_jobs (runuid) values ('" & runid & "')"
+	myconn.execute sql,rec_count
+
+'	If Err.number > 0 Or rec_count = 0 Then
+ '   	dbg "ERROR: Storing ID " & runid & " failed. Could not connect to Sahi database or something else strange."
+	'End If
+End Function
+
