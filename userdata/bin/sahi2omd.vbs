@@ -1,9 +1,7 @@
 Option Explicit
 ' NSCA
-' -mode nsca -m 1 -f testcases\testcase1_OK_3steps_allok.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
+' -mode nsca -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
 ' DB
-' -mode db -m 1 -f testcases\testcase1_OK_3steps_allok.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s testcase
-
 
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
@@ -167,20 +165,7 @@ If url = "" Then
 	WScript.quit(1)
 End If
 
-If nagios = "" Then
-	WScript.echo "ERROR: Please specify the receiving monitoring server (-n). "  & helpstring
-	WScript.quit(1)
-End If
 
-If hostname = "" Then
-	WScript.echo "ERROR: Please specify a host (-h) on the monitoring system. "  & helpstring
-	WScript.quit(1)
-End If
-
-If service = "" Then
-	WScript.echo "ERROR: Please specify a servicedescription (-s) on the monitoring system. "  & helpstring
-	WScript.quit(1)
-End If
 
 If maxthreads = "" Then
 	maxthreads = 1
@@ -207,26 +192,21 @@ runuid = get_runuid()
 
 ' Health checks
 If (is_mode_nsca) Then 
-	resultfile = sahi_results & "\\" & runuid & ".results"	
-	nscadatafile = sahi_results & "\\" & runuid & ".nsca"
-	' check NSCA
-	fileExistsOrDie send_nsca_bin, "NSCA binary " & send_nsca_bin & " could not be found!"
-	fileExistsOrDie send_nsca_cfg, "NSCA config file " & send_nsca_cfg & " could not be found!"
+	nsca_health_or_die
 Else
-	fileExistsOrDie mysql_connector, "sahi2omd.vbs was called with mode 'db', but no MySQL Connector file was found." & _
+	file_Exists_OrDie mysql_connector, "sahi2omd.vbs was called with mode 'db', but no MySQL Connector file was found." & _
 		"Please specify the correct mysql_connector in the config section of sahi2omd.vbs." 
 End If 
 
-If Not sahirunning Then
+If Not sahi_health Then
 	dbg "ERROR: Sahi does not run. Exiting. "
 	die "UNKNOWN: Sahi does not run. Verify that Sahi is started and ready to run the tests. "  & helpstring, 3
 Else
-	dbg "Sahi is running properly. "
+	dbg "Sahi process is running properly. "
 End If
 
-
 ' check if Sahi Suite / Case File is present
-fileExistsOrDie sahi_scripts & "\" & file, "Sahi Test/Suite file " & sahi_scripts & "\" & file & " could not be found! "  & helpstring
+file_Exists_OrDie sahi_scripts & "\" & file, "Sahi Test/Suite file " & sahi_scripts & "\" & file & " could not be found! "  & helpstring
 
 
 ' RUN TESTS  -----------------------------------------------------------------------------------
@@ -245,11 +225,11 @@ Set Wshell = Nothing
 
 
 If (is_mode_db) Then
-	' FIXME
+	' FIXME & debug meldugn
 			
 Else
 	' check if NSCA result file was created
-	fileExistsOrDie resultfile, "sahi2omd.vbs cannot find the result file " & resultfile
+	file_Exists_OrDie resultfile, "sahi2omd.vbs cannot find the result file " & resultfile
 
 	' read TMP-resultfile and send the data to OMD (or DB... todo)
 	dbg "Now reading in result file " & resultfile & " ..."
@@ -258,7 +238,7 @@ Else
 	Set FSObject = Nothing
 End If
 
-dbg "Script ran in " & runtime & " seconds."
+dbg "- Script ended. -"
 ' End MAIN ==========================================================================================
 
 ' helper functions -----------------------------------------------------------------------------------
@@ -387,8 +367,17 @@ Sub send2NSCA (inhostname, inservice, instatus, inoutput, inperfdata, innagios)
 	Set objFile = Nothing
 End Sub 
 
-Sub fileExistsOrDie(infile, InStr)
+Function file_Exists(infile)
+	Dim ret
 	If Not FSObject.FileExists(infile) Then
+		file_Exists = False
+	Else
+		file_Exists = True
+	End If
+End Function
+
+Sub file_Exists_OrDie(infile, InStr)
+	If Not file_Exists(infile) Then
 		die "UNKNOWN: " & InStr, 3
 	End If
 End Sub
@@ -401,7 +390,61 @@ Sub die(inmsg, instate)
 	WScript.quit
 End Sub
 
-Function sahirunning 
+Function nsca_params_ok
+	Dim ret
+	ret = ""
+
+	If nagios = "" Then
+		ret = "ERROR: Please specify the receiving monitoring server (-n). " 
+	End If
+	If hostname = "" Then
+		ret = ret & "ERROR: Please specify a host (-h) on the monitoring system. "
+	End If	
+	If service = "" Then
+		ret = ret & "ERROR: Please specify a servicedescription (-s) on the monitoring system. " 
+	End If
+
+	nsca_params_ok = ret
+	
+End Function
+
+Function nsca_health
+	' Check if NSCA is useable, but don't die, if not
+	If file_Exists (send_nsca_bin) And file_Exists (send_nsca_cfg) And nsca_params_ok Then
+		resultfile = sahi_results & "\\" & runuid & ".results"	
+		nscadatafile = sahi_results & "\\" & runuid & ".nsca"
+		nsca_health = True
+	Else
+		nsca_health = False
+	End If	
+End Function
+
+Function nsca_health_or_die
+	Dim parmmsg
+	' Check if NSCA is useable, if not, die 
+	If Not file_Exists (send_nsca_bin) Then 
+		WScript.echo "NSCA binary " & send_nsca_bin & " could not be found!"
+		WScript.quit
+	End If
+
+	If Not file_Exists (send_nsca_cfg) Then 
+		WScript.Echo "NSCA config file " & send_nsca_cfg & " could not be found!"
+		WScript.quit
+	End If
+
+	parmmsg = nsca_params_ok
+	If Len(parmmsg) > 0 Then 
+		WScript.Echo "For NSCA mode, you need to specify hostname, service, and the recieving OMD server. " & parmmsg
+		WScript.Quit
+	End If
+
+	' ok, set NSCA variables
+	resultfile = sahi_results & "\\" & runuid & ".results"	
+	nscadatafile = sahi_results & "\\" & runuid & ".nsca"
+	nsca_health_or_die = True
+End Function
+
+Function sahi_health 
 	Dim strComputer, objWMIService, colProcesses, ret
 	strComputer = "."
 	Set objWMIService = GetObject("winmgmts:{impersonationLevel=impersonate}!\\" & strComputer & "\root\cimv2")
@@ -413,7 +456,7 @@ Function sahirunning
 	End If
 	Set objWMIService = Nothing
 	Set colProcesses = Nothing
-	sahirunning = ret
+	sahi_health = ret
 End Function
 
 Function getduration_result (dur, w, c)

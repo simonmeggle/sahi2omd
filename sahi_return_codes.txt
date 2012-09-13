@@ -7,7 +7,7 @@ Case-Stati:
 	2		3	CRIT		= case exceeded runtime 
 	1		2	WARN		= case exceeded runtime 
 2.2 step duration 
-	1 		1	WARN 		= step exceeded runtime
+	1 		1	WARN 			= step exceeded runtime
 							(können nur warning sein!)
 	0		0	OK			= no error 
 

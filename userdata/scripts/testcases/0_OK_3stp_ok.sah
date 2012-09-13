@@ -7,12 +7,12 @@ try {
 // (0,0) = kein Threshold
   initialize(35,45);
   
-_wait(100); 
-step("Click auf Anmeldung in 3 Sekunden",2);   
+_wait(300); 
+step("Click auf Anmeldung unter 3 Sekunden",3);   
 _wait(100);  
-step("Click auf Password in 4 Sekunden",3);
-_wait(100);  
-step("Click auf Anmeldelink in 2 Sekunden",3);
+step("Click auf Password unter 4 Sekunden",4);
+_wait(600);  
+step("Click auf Anmeldelink unter 2 Sekunden",2);
 
 
 

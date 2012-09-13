@@ -4,14 +4,14 @@ $debug = true;
 try {
 // Parameter 1/2: warning/critical-Schwellwerte für diesen Testcase
 // (0,0) = kein Threshold
-  initialize(3,20);
+  initialize(18,20);
 
 _wait(2000); 
-step("Click auf Anmeldung in 3 Sekunden",1);   
+step("Click auf Anmeldung ueber 1 Sekunden",1);   
 _wait(100);  
-step("Click auf Password in 4 Sekunden",3);
+step("Click auf Password unter 3 Sekunden",3);
 _wait(100);  
-step("Click auf Anmeldelink in 2 Sekunden",3);
+step("Click auf Anmeldelink unter 3 Sekunden",3);
 
 _wait(3500);
 

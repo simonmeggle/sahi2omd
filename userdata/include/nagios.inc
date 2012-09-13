@@ -49,16 +49,21 @@ function initialize($w, $c) {
 }
 
 function step($stepname,$stepthreshold) {
+// call this function everytime a step should be _finished_ within a certain time. 
+// It automatically resets the timer for possible further steps. 
 $debug_indent++;
 debug("========= function '" + arguments.callee.name + "' ===================");
 	//var $now = Math.floor(new Date().getTime() / 1000).toString();
 	var $now = (new Date().getTime() / 1000).toString();
 	var $stepduration = ($now - $stepstart).toFixed(2);
+	var $stepres = ($stepduration > $stepthreshold ? 1 : 0);
 	$stepcount++;
-	debug("Step #" + $stepcount + " (" + $stepname + "); duration " + $stepduration + " seconds" );
-	$steps["step " + $stepcount + ": " +$stepname] = {};
-	$steps["step " + $stepcount + ": " +$stepname].duration = $stepduration;
-	$steps["step " + $stepcount + ": " +$stepname].threshold  = $stepthreshold;
+	$stepname = $stepname.replace(/ /g,'_');
+	debug("Step #" + $stepcount + " (" + $stepname + "); duration = " + $stepduration + " seconds, threshold = " + $stepthreshold + ", stepres = " + $stepres );
+	$steps["s_" + $stepcount + "_" +$stepname] = {};
+	$steps["s_" + $stepcount + "_" +$stepname].duration = $stepduration;
+	$steps["s_" + $stepcount + "_" +$stepname].threshold  = $stepthreshold;
+	$steps["s_" + $stepcount + "_" +$stepname].stepres  = $stepres;
 	
 	$stepstart = $now; 
 $debug_indent--;
@@ -70,16 +75,15 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("...");
 	debug("...back again.");
 	debug("got $msg = " + $msg);
-   var $case_result = 0;
-   var $db_result = 0;
+   var $case_result = 0; // Result for NSCA = Nagios Std 0..2
+   var $case_result_db = 0; // Result for DB = 0..4
    var $nagiosStopTime = (new Date().getTime() / 1000).toString();
    var $duration = ($nagiosStopTime - $nagiosStartTime).toFixed(2); 
    debug("$nagiosStopTime = " + $nagiosStopTime + ", total case duration is " + $duration + " seconds.");
 
    debug("Determing case status:");
    if (ScriptRunner.hasErrors() > 0) {
-	   // 1. Fatal exceptions? 
-	   
+	   // 1. Fatal exceptions? 	   
        var $errmesg, $errmesg1, $errmesg2 = "";   
        if ($msg) {
 			debug("Original msg: " + $msg);
@@ -99,32 +103,52 @@ debug("========= function '" + arguments.callee.name + "' ===================");
        } else {
           $errmesg = "";
        }    
-	   $case_result = 2;   
-       $msg = sprintf('ended with errors%s', $errmesg );
-	   debug("Case had exception -> case_result = " + $case_result + ", msg = " + $msg);
+		if (is_mode_db() ) {
+			$case_result_db = 4;
+			$msg = $errmesg;
+			debug("Case had exception -> case_result_db=" + $case_result_db + ", case_result=" + $case_result + ", msg = " + $msg);
+		} else {
+			$case_result = 2;   
+			$msg = sprintf('ended with errors%s', $errmesg );
+			debug("Case had exception -> case_result=" + $case_result + ", msg = " + $msg);
+		}
     } else {
 		debug("Case had no exception, checking case and step runtimes...");
-		$msg = 'was ok';
-		// 2.1 Now case duration
-		$case_result = getcase_duration_result($duration, $warn, $crit ); 
-		if ($case_result > 0) {
-			$msg += sprintf(', case beyond runtime (%0.2f/%d/%d s)',$duration,$warn,$crit); 
-			debug("Case over runtime -> case_result = " + $case_result + ", msg = " + $msg);
-		}
+		$msg = 'Ok';
+		// 2.1 case duration
+		if (is_mode_db() ) {
+			$case_result_db = getcase_duration_db_result($duration, $warn, $crit ); 
+			if ($case_result_db > 0) {
+				$msg += sprintf(', but case over runtime (%0.2f/%d/%d s)',$duration,$warn,$crit); 
+				debug("Case over runtime -> case_result_db = " + $case_result_db );
+			}			
+		} else {
+			$case_result = getcase_duration_result($duration, $warn, $crit ); 
+			if ($case_result > 0) {
+				$msg += sprintf(', but case over runtime (%0.2f/%d/%d s)',$duration,$warn,$crit); 
+				debug("Case over runtime -> case_result = " + $case_result + ", msg = " + $msg);
+			}
+		}	
+			
 		// 2.2 step duration
 		debug("checking step runtimes...");
+
 		for (var $s in $steps) {
 			debug(str_repeat(" ",4 + $debug_indent) + "--- Step " + $s + ":");
-			var $step_result = getstep_result ($steps[$s]["duration"],$steps[$s]["threshold"]);			
-			if ($step_result > 0) { 
-				$msg += sprintf(', %s beyond runtime (%0.2f/%d s)', $s, $steps[$s]["duration"],$steps[$s]["threshold"]);
-				debug(str_repeat(" ",4 + $debug_indent) + $s + "was over runtime");
+//			var $step_result = getstep_result ($steps[$s]["duration"],$steps[$s]["threshold"]);						
+			if ($steps[$s]["stepres"] > 0) { 
+				$msg += sprintf(', %s over runtime (%0.2f/%d s)', $s, $steps[$s]["duration"],$steps[$s]["threshold"]);
+				debug(str_repeat(" ",4 + $debug_indent) + $s + " was over runtime");
 			}
-			$case_result = getworststate($case_result, $step_result);
-			debug(str_repeat(" ",4 + $debug_indent) + "new case_result = " + $case_result + ", msg = " + $msg);
+			if (is_mode_db() ) {
+				$case_result_db = getworststate($case_result_db, $steps[$s]["stepres"]);
+				debug(str_repeat(" ",4 + $debug_indent) + "new case_result_db = " + $case_result_db );
+			} else {
+				$case_result = getworststate($case_result, $steps[$s]["stepres"]);
+				debug(str_repeat(" ",4 + $debug_indent) + "new case_result = " + $case_result + ", msg = " + $msg);
+			}
 		}	
-		$msg += " ";
-		
+		$msg += " ";		
 	}
 	_set($lastpage, window.document.location.href);
 	_set($browser, navigator.userAgent);
@@ -145,22 +169,23 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("------------------");
 	
 	if (is_mode_db() ) {
-		write2DB($suitename, $casename, $duration, $nagiosStartTime, $nagiosStopTime, $warn.toString(), $crit.toString(), $msg, $browser, $lastpage, $runuid)
+		write2DB($suitename, $casename, $case_result_db.toString(), $duration, $nagiosStartTime, $nagiosStopTime, $warn.toString(), $crit.toString(), $msg, $browser, $lastpage, $runuid)
 	} else {
 		write2CSV($suitename, $casename, $case_result.toString(), $duration.replace('.',','), $warn.toString(), $crit.toString(), $msg, $browser, $lastpage);
 	}
+	debug("- Script ended -");
 $debug_indent--;
 }
 
-function write2DB($suitename, $casename, $duration, $nagiosStartTime, $nagiosStopTime,$warn, $crit, $msg, $browser, $lastpage, $runuid) {
-//		testcase1-4.suite, 1_OK_3stp_ok.sah, 35, 45, 1,81, NaN, NaN, http://oxid/shop/, 1271BFEB-20FB-45D6-BC30-13D7C746BDC8, undefined, undefined
+function write2DB($suitename, $casename, $case_result, $duration, $nagiosStartTime, $nagiosStopTime,$warn, $crit, $msg, $browser, $lastpage, $runuid) {
+//		testcase1-4.suite, 1_OK_3stp_ok.sah, 0, 35, 45, 1,81, NaN, NaN, http://oxid/shop/, 1271BFEB-20FB-45D6-BC30-13D7C746BDC8, undefined, undefined
 // ugly: $steps is not an argument
 $debug_indent++;
 debug("========= function '" + arguments.callee.name + "' ===================");
-	debug("got args: " + $suitename+", "+$casename+", "+$duration+", "+$nagiosStartTime+", "+$nagiosStopTime +", "+parseInt($warn)+", "+parseInt($crit)+", "+$msg+", "+$browser+", "+$lastpage+", "+$runuid);
+	debug("got args: " + $suitename+", "+$casename+", "+$case_result+", "+$duration+", "+$nagiosStartTime+", "+$nagiosStopTime +", "+parseInt($warn)+", "+parseInt($crit)+", "+$msg+", "+$browser+", "+$lastpage+", "+$runuid);
 	var $stmt, $dbres, $suite_id;
 	$suite_id = "NULL";
-	// if suite: write save once
+	// if suite: write only once
 	if ($suite) {
 		debug("Searching for a suite with this runuid....");
 		$stmt = "SELECT COUNT(*) AS count FROM sahi_suites where guid = '" + $runuid + "'";
@@ -169,26 +194,27 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 		debug("...found " + $dbres + " suite entries.");
 		if ($dbres[0]['count'] == 0) {
 			debug("Creating suite entry:");
-			$stmt = sprintf("INSERT INTO sahi_suites (name, guid, warning, critical) VALUES ('%s','%s','%d', '%d')",
+			$stmt = sprintf("INSERT INTO sahi_suites (name, guid, warning, critical) VALUES ('%s','%s','%d','%d')",
 				$suitename, $runuid, $warn, $crit);
 			debug("SQL: " + $stmt);
 			$db.update($stmt);
 		}
+		// get Suite ID
 		debug("Fetching suite id:");
 		$stmt = "SELECT MAX(id) AS suite_id from sahi_suites";
 		debug("SQL: " + $stmt)
 		$dbres = $db.select($stmt);
 		$suite_id = $dbres[0]['suite_id'];
-		debug("got suite ID " + $suite_id);
+		debug("Suite stored under ID " + $suite_id);
 	}
-	// write Case table
-	debug("Storing Case Info in DB...");
-	$stmt = sprintf("INSERT INTO sahi_cases (name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration,msg)" + 
-		"VALUES ('%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f','%s')",
-		$casename, $runuid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg);
+	// write Case result
+	debug("Storing Case result in DB...");
+	$stmt = sprintf("INSERT INTO sahi_cases (result, name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration,msg)" + 
+		"VALUES ('%s', '%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f','%s')",
+		$case_result, $casename, $runuid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg);
 	debug("SQL: " + $stmt);
 	$dbres = $db.update($stmt);
-	
+	// get Case ID
 	$stmt = "SELECT MAX(id) AS case_id from sahi_cases";
 	debug("SQL: " + $stmt)
 	$dbres = $db.select($stmt);
@@ -196,12 +222,12 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("Case stored under ID " + $case_id);
 	
 	// write Step table
-	debug("Storing Step Info in DB...");
+	debug("Storing step results in DB...");
 	for (var $s in $steps) {
 		debug(str_repeat(" ",4 + $debug_indent) + "--- Step " + $s + ":");
-		$stmt = sprintf("INSERT INTO sahi_steps (name, warning, sahi_cases_id, duration)" + 
-			"VALUES ('%s','%s','%d','%0.2f')",
-			$s,$steps[$s]["threshold"], parseInt($case_id), $steps[$s]["duration"]);
+		$stmt = sprintf("INSERT INTO sahi_steps (result, name, warning, sahi_cases_id, duration)" + 
+			"VALUES ('%d','%s','%s','%d','%0.2f')",
+			parseInt($steps[$s]["stepres"]), $s,$steps[$s]["threshold"], parseInt($case_id), $steps[$s]["duration"]);
 		debug("SQL: " + $stmt);
 		$db.update($stmt);	
 	}	
@@ -232,16 +258,16 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 function getcase_duration_result ($dur, $w, $c) {
 $debug_indent++;
 debug("========= function '" + arguments.callee.name + "' ===================");
-// compares script runtime against thresholds
+// compares script runtime against thresholds, returns common Nagios results
 // if thresholds are 0,0, OK is returned
 	debug("got: $dur = " + $dur + ", $w = " + $w + ", $c = " + $c);
    var $ret = "0";
    if ($warn > 0 && $crit > 0) {
       if ( $dur >= $w ) {
         if ($dur < $c) {
-           $ret = "1";    
+				$ret = "1";    
         } else {
-           $ret = "2";
+				$ret = "2";    
         }
       }
    } else {
@@ -252,6 +278,28 @@ debug("========= function '" + arguments.callee.name + "' ===================");
    return $ret;
 }
 
+function getcase_duration_db_result ($dur, $w, $c) {
+$debug_indent++;
+debug("========= function '" + arguments.callee.name + "' ===================");
+// compares script runtime against thresholds, returns DB case results
+// if thresholds are 0,0, OK is returned
+	debug("got: $dur = " + $dur + ", $w = " + $w + ", $c = " + $c);
+   var $ret = "0";
+   if ($warn > 0 && $crit > 0) {
+      if ( $dur >= $w ) {
+        if ($dur < $c) {
+				$ret = "2";    
+        } else {
+				$ret = "3";    
+        }
+      }
+   } else {
+		debug("(No thresholds set; returning OK. )");
+	}
+	debug("Returning: " + $ret);
+   $debug_indent--;   
+   return $ret;
+}
 function getstep_result ($dur, $threshold) {
 $debug_indent += 1;
 debug("========= function '" + arguments.callee.name + "' ===================");
