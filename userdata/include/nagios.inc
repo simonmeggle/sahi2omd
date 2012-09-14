@@ -11,7 +11,7 @@ function initialize($w, $c) {
 		$suite = true;
 	}
 	
-	$debugfile = "..\\temp\\" + $runuid + "_" + $suitename + "_" + $casename + ".debug";
+	$debugfile = "..\\temp\\" + $guid + "_" + $suitename + "_" + $casename + ".debug";
 	debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("This is Sahi Case " + $casename + " (Suite " + $suitename + ")");
 	$warn = $w;
@@ -25,7 +25,7 @@ function initialize($w, $c) {
 			throw("ERROR: failed to load DB driver.");
 		}			
 	} else {
-		$resultfile = "..\\..\\temp\\" + $runuid + ".results";
+		$resultfile = "..\\..\\temp\\" + $guid + ".results";
 		debug("Result file is " + $resultfile);
 	}
 	
@@ -169,33 +169,33 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("------------------");
 	
 	if (is_mode_db() ) {
-		write2DB($suitename, $casename, $case_result_db.toString(), $duration, $nagiosStartTime, $nagiosStopTime, $warn.toString(), $crit.toString(), $msg, $browser, $lastpage, $runuid)
+		write2DB($suitename, $casename, $case_result_db.toString(), $duration, $nagiosStartTime, $nagiosStopTime, $warn.toString(), $crit.toString(), $msg, $browser, $lastpage, $guid)
 	} else {
 		write2CSV($suitename, $casename, $case_result.toString(), $duration.replace('.',','), $warn.toString(), $crit.toString(), $msg, $browser, $lastpage);
 	}
-	debug("- Script ended -");
+	debug("- Sahi Case " + $casename + "(ID " + $runid + ") ended -");
 $debug_indent--;
 }
 
-function write2DB($suitename, $casename, $case_result, $duration, $nagiosStartTime, $nagiosStopTime,$warn, $crit, $msg, $browser, $lastpage, $runuid) {
+function write2DB($suitename, $casename, $case_result, $duration, $nagiosStartTime, $nagiosStopTime,$warn, $crit, $msg, $browser, $lastpage, $guid) {
 //		testcase1-4.suite, 1_OK_3stp_ok.sah, 0, 35, 45, 1,81, NaN, NaN, http://oxid/shop/, 1271BFEB-20FB-45D6-BC30-13D7C746BDC8, undefined, undefined
 // ugly: $steps is not an argument
 $debug_indent++;
 debug("========= function '" + arguments.callee.name + "' ===================");
-	debug("got args: " + $suitename+", "+$casename+", "+$case_result+", "+$duration+", "+$nagiosStartTime+", "+$nagiosStopTime +", "+parseInt($warn)+", "+parseInt($crit)+", "+$msg+", "+$browser+", "+$lastpage+", "+$runuid);
+	debug("got args: " + $suitename+", "+$casename+", "+$case_result+", "+$duration+", "+$nagiosStartTime+", "+$nagiosStopTime +", "+parseInt($warn)+", "+parseInt($crit)+", "+$msg+", "+$browser+", "+$lastpage+", "+$guid);
 	var $stmt, $dbres, $suite_id;
 	$suite_id = "NULL";
 	// if suite: write only once
 	if ($suite) {
-		debug("Searching for a suite with this runuid....");
-		$stmt = "SELECT COUNT(*) AS count FROM sahi_suites where guid = '" + $runuid + "'";
+		debug("Searching for a suite with this guid....");
+		$stmt = "SELECT COUNT(*) AS count FROM sahi_suites where guid = '" + $guid + "'";
 		debug("SQL: " + $stmt);
 		$dbres = $db.select($stmt);
 		debug("...found " + $dbres + " suite entries.");
 		if ($dbres[0]['count'] == 0) {
 			debug("Creating suite entry:");
 			$stmt = sprintf("INSERT INTO sahi_suites (name, guid, warning, critical) VALUES ('%s','%s','%d','%d')",
-				$suitename, $runuid, $warn, $crit);
+				$suitename, $guid, $warn, $crit);
 			debug("SQL: " + $stmt);
 			$db.update($stmt);
 		}
@@ -211,7 +211,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("Storing Case result in DB...");
 	$stmt = sprintf("INSERT INTO sahi_cases (result, name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration,msg)" + 
 		"VALUES ('%s', '%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f','%s')",
-		$case_result, $casename, $runuid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg);
+		$case_result, $casename, $guid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg);
 	debug("SQL: " + $stmt);
 	$dbres = $db.update($stmt);
 	// get Case ID

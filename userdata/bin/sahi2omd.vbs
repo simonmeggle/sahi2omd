@@ -7,7 +7,7 @@ Option Explicit
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
 Dim debug, version, FSObject, debugfile, objdebug, mysql_connector,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
-Dim command,runuid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
+Dim command,guid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
 Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
 
  ' Überprüfung ob Sahi läuft
@@ -50,7 +50,7 @@ mysql_connector = sahi_home & "\extlib\db\mysql-connector-java-5.1.21-bin.jar"
 ' MySQL user
 mysql_user = "sahi"
 ' MySQL password
-mysql_password = "sahimon"
+mysql_password = "sahipw"
 
 
 ' ##############################################################################
@@ -200,9 +200,7 @@ If (warning > critical) Then
 	WScript.quit(1)
 End If
 		
-runuid = get_runuid()
-
-store_runid runuid,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
+guid = get_guid()
 
 ' Health checks
 If (is_mode_nsca) Then 
@@ -226,8 +224,8 @@ file_Exists_OrDie sahi_scripts & "\" & file, "Sahi Test/Suite file " & sahi_scri
 command = "java -cp " & sahi_home & "\lib\ant-sahi.jar net.sf.sahi.test.TestRunner -test " &  _
 	sahi_scripts & "\" & file & " -browserType " & browser & " -baseURL " & url & " -host localhost " &_
 	"-port 9999 -threads " & maxthreads & " -useSingleSession " & singlesession 
-' add runuid
-command = command & " -initJS " & Chr(34) & "var $runuid=" & Chr(39) & runuid & Chr(39) & Chr(59)
+' add guid
+command = command & " -initJS " & Chr(34) & "var $guid=" & Chr(39) & guid & Chr(39) & Chr(59)
 ' add working mode variable (db/nsca)
 command = command & "var $mode=" & Chr(39) & mode & Chr(39) & Chr(59) & Chr(34)
 
@@ -238,11 +236,11 @@ Set Wshell = Nothing
 
 
 If (is_mode_db) Then
-	' FIXME & debug meldu
-	' runid is stored in the very end of each run. This is to prevent check_mysql_health on the Nagios
+
+	' guid is stored in the very end of each run. This is to prevent check_mysql_health on the Nagios
 	' side to read out suite/case results while the whole suite/case is still running.
-	dbg "...all Sahi cases were executed. Storing ID of this run (" & runuid & ") into database."
-	store_runid runuid,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
+	dbg "...all Sahi cases were executed. Storing ID of this run (" & guid & ") into database."
+	store_guid guid,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
 Else
 	' check if NSCA result file was created
 	file_Exists_OrDie resultfile, "sahi2omd.vbs cannot find the result file " & resultfile
@@ -427,8 +425,8 @@ End Function
 Function nsca_health
 	' Check if NSCA is useable, but don't die, if not
 	If file_Exists (send_nsca_bin) And file_Exists (send_nsca_cfg) And nsca_params_ok Then
-		resultfile = sahi_results & "\\" & runuid & ".results"	
-		nscadatafile = sahi_results & "\\" & runuid & ".nsca"
+		resultfile = sahi_results & "\\" & guid & ".results"	
+		nscadatafile = sahi_results & "\\" & guid & ".nsca"
 		nsca_health = True
 	Else
 		nsca_health = False
@@ -455,8 +453,8 @@ Function nsca_health_or_die
 	End If
 
 	' ok, set NSCA variables
-	resultfile = sahi_results & "\\" & runuid & ".results"	
-	nscadatafile = sahi_results & "\\" & runuid & ".nsca"
+	resultfile = sahi_results & "\\" & guid & ".results"	
+	nscadatafile = sahi_results & "\\" & guid & ".nsca"
 	nsca_health_or_die = True
 End Function
 
@@ -631,26 +629,37 @@ Function is_mode_db()
 End Function
 
 
-Function get_runuid()
+Function get_guid()
  	Dim UpdateID, TypeLib
 	Set TypeLib = CreateObject("Scriptlet.TypeLib")
 	UpdateID = Trim(UCase(Mid(TypeLib.guid, 2, 36)))
-	get_runuid = UpdateID
+	get_guid = UpdateID
 End Function
 
-Function store_runid(runid,user,pwd,host,db,driver )
-	Dim rec_count, myconn, connection, result,sql	
-'	On Error Resume Next
+Function store_guid(inguid,user,pwd,host,db,driver )
+	Dim rec_count, myconn, connection, result, sql, i	
+	i = 1
+	On Error Resume Next
 	Set myconn = CreateObject("adodb.connection")
 	
-	connection = "driver={" & mysql_odbcdriver & "};server=" & host & ";uid=" & user & ";Pwd=" & pwd & ";database=" & db
-	myconn.open (connection)
-	Set result = CreateObject("adodb.recordset")
-	sql = "insert into sahi_jobs (runuid) values ('" & runid & "')"
-	myconn.execute sql,rec_count
-
-'	If Err.number > 0 Or rec_count = 0 Then
- '   	dbg "ERROR: Storing ID " & runid & " failed. Could not connect to Sahi database or something else strange."
-	'End If
+	connection = "driver" & Chr(61) & "{" & mysql_odbcdriver & "};server" & Chr(61) & _
+		host & ";uid" & Chr(61) & user & ";pwd" & Chr(61) & pwd & ";database" & Chr(61) & db
+	Do Until i > 3
+		myconn.open (connection)
+		Set result = CreateObject("adodb.recordset")
+		sql = "insert into sahi_jobs (guid) values ('" & inguid & "')"
+		myconn.execute sql,rec_count
+	
+		If Err.number > 0 Or rec_count = 0 Then
+	   		If i < 3  Then
+				dbg "WARNING: Storing ID " & inguid & " failed " & i & " times. Retry..."
+			Else
+				dbg "FATAL ERROR: Storing ID " & inguid & " failed. Error message: " & Err.Description & ". Giving up!"
+			End If 
+			i = i + 1
+		Else
+			Exit Do
+		End If
+	Loop
 End Function
 
