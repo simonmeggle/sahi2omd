@@ -6,27 +6,22 @@ try {
 
 // case runtime zu lang -> critical 
 initialize(1,2);
-
-_wait(300); 
-step("Click auf Anmeldung unter 2 Sekunden",2);   
-_wait(800);  
-step("Click auf Password unter 3 Sekunden",3);
-_wait(800);  
-step("Click auf Anmeldelink unter 3 Sekunden",3);
-
-_wait(3000);
-
-// //Anmeldung am Shop
+  
  _assertExists(_link("Anmelden"));
 _assert(_isVisible(_link("Anmelden")));
 _click(_link("Anmelden"));
 _click(_textbox("lgn_usr[1]"));
+step("Click Anmeldung",3);  
+
 _setValue(_textbox("lgn_usr[1]"), "sahimon.itoring@googlemail.com");
 _highlight(_password("lgn_pwd"));
 _click(_password("lgn_pwd"));
 _setValue(_password("lgn_pwd"), "sahimon");
+step("Eingeben Logindaten",4);
+ 
 _highlight(_submit("Anmelden"));
 _click(_submit("Anmelden"));
+step("Anmelden",5);
 
  } catch($error) {
     _logExceptionAsFailure($error) 

@@ -7,11 +7,11 @@ try {
   initialize(3,20);
 
 _wait(2000); 
-step("Click auf Anmeldung in 3 Sekunden",1);   
+step("Anmeldung i 3 sek",1);   
 _wait(100);  
-step("Click auf Password in 4 Sekunden",3);
+step("Password i 4 sek",3);
 _wait(100);  
-step("Click auf Anmeldelink in 2 Sekunden",3);
+step("Anmeldelink i 2 sek",3);
 
 _wait(3500);
 

@@ -60,11 +60,14 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	$stepcount++;
 	$stepname = $stepname.replace(/ /g,'_');
 	debug("Step #" + $stepcount + " (" + $stepname + "); duration = " + $stepduration + " seconds, threshold = " + $stepthreshold + ", stepres = " + $stepres );
-	$steps["s_" + $stepcount + "_" +$stepname] = {};
-	$steps["s_" + $stepcount + "_" +$stepname].duration = $stepduration;
-	$steps["s_" + $stepcount + "_" +$stepname].threshold  = $stepthreshold;
-	$steps["s_" + $stepcount + "_" +$stepname].stepres  = $stepres;
-	
+	// $steps["s_" + $stepcount + "_" +$stepname] = {};
+	// $steps["s_" + $stepcount + "_" +$stepname].duration = $stepduration;
+	// $steps["s_" + $stepcount + "_" +$stepname].threshold  = $stepthreshold;
+	// $steps["s_" + $stepcount + "_" +$stepname].stepres  = $stepres;
+	$steps[$stepname] = {};
+	$steps[$stepname].duration = $stepduration;
+	$steps[$stepname].threshold  = $stepthreshold;
+	$steps[$stepname].stepres  = $stepres;	
 	$stepstart = $now; 
 $debug_indent--;
 }
@@ -194,8 +197,8 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 		debug("...found " + $dbres + " suite entries.");
 		if ($dbres[0]['count'] == 0) {
 			debug("Creating suite entry:");
-			$stmt = sprintf("INSERT INTO sahi_suites (name, guid, warning, critical) VALUES ('%s','%s','%d','%d')",
-				$suitename, $guid, $warn, $crit);
+			$stmt = sprintf("INSERT INTO sahi_suites (name, guid) VALUES ('%s','%s')",
+				$suitename, $guid);
 			debug("SQL: " + $stmt);
 			$db.update($stmt);
 		}

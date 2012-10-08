@@ -5,9 +5,17 @@ $debug = true;
 try {
 // Parameter 1/2: warning/critical-Schwellwerte für diesen Testcase
 // (0,0) = kein Threshold
-  initialize(35,45);
+  initialize(3,6);
 
-throw("Exception vorhanden!")
+  $dec = Math.floor((Math.random() * 4000) / 1000);
+  if ($dec > 3) {
+	throw("controlled Exception");
+  } else if ($dec > 2) {
+  _wait(7000);
+  } else if ($dec > 1) { 
+    _wait(5000) ;
+  } 
+  
  
  } catch($error) {
     _logExceptionAsFailure($error) 
