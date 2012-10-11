@@ -10,6 +10,8 @@ Dim debug, version, FSObject, debugfile, objdebug, mysql_connector,mysql_user,my
 Dim command,guid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
 Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
 
+guid = get_guid()
+
  ' Überprüfung ob Sahi läuft
  ' Überprüfung ob gültiger Testcase angegeben wurde
  ' Überprüfung ob results erzeugt werden konnten
@@ -38,7 +40,7 @@ send_nsca_port = 5667
 ' where to write Nagios configuration samples (option -p)
 sahi2omd_cfg = sahi_userdata & "\sahi2omd.cfg"
 ' Debug File 
-debugfile = sahi_userdata & "\temp\sahi2omd.log"
+debugfile = sahi_userdata & "\temp\" & guid & "sahi2omd.log"
 ' MySQL Hostname
 mysql_host = "localhost"
 ' MySQL Sahi Database Name
@@ -200,7 +202,7 @@ If (warning > critical) Then
 	WScript.quit(1)
 End If
 		
-guid = get_guid()
+
 
 ' Health checks
 If (is_mode_nsca) Then 
