@@ -176,7 +176,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	} else {
 		write2CSV($suitename, $casename, $case_result.toString(), $duration.replace('.',','), $warn.toString(), $crit.toString(), $msg, $browser, $lastpage);
 	}
-	debug("- Sahi Case " + $casename + "(ID " + $runid + ") ended -");
+	debug("- Sahi Case " + $casename + "(ID " + $guid + ") ended -");
 $debug_indent--;
 }
 
