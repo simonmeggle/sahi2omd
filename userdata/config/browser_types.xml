@@ -88,6 +88,15 @@
 		<capacity>1</capacity>  
 	</browserType>
 	
-	
+<browserType> 
+	<name>phantomjs</name> 
+	<displayName>PhantomJS</displayName> 
+	<icon>safari.png</icon> 
+	<path>C:\phantomjs-1.7.0-windows\phantomjs.exe</path> 
+	<options>--debug=yes --proxy=localhost:9999 C:\phantomjs-1.7.0-windows\sahi.js</options> 
+	<processName>phantomjs.exe</processName> 
+	<capacity>100</capacity> 
+	<force>true</force> 
+</browserType>	
 	
 </browserTypes>
