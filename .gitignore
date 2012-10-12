@@ -1,5 +1,6 @@
 /batch_runners
-/config
+*certs*
+*demo*
 /editors
 /extlib/apc
 /extlib/rhino
@@ -22,3 +23,4 @@
 /userdata/logs
 /userdata/temp
 /userdata/bin/sahi.debug
+*Kopie*
