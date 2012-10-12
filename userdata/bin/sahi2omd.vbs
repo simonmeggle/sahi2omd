@@ -37,7 +37,7 @@ send_nsca_bin = "C:\Programme\send_nsca\send_nsca.exe"
 send_nsca_cfg = "C:\Programme\send_nsca\send_nsca.cfg"
 ' send_nsca port
 send_nsca_port = 5667
-' where to write Nagios configuration samples (option -p)
+' where to write Nagios configuration samples (option -p) FIXME
 sahi2omd_cfg = sahi_userdata & "\sahi2omd.cfg"
 ' Debug File 
 debugfile = sahi_userdata & "\temp\" & guid & "sahi2omd.log"
@@ -219,6 +219,8 @@ Else
 	dbg "Sahi process is running properly. "
 End If
 
+dir_Exists_or_create(sahi_userdata & "\logs\screenshots")
+
 ' check if Sahi Suite / Case File is present
 file_Exists_OrDie sahi_scripts & "\" & file, "Sahi Test/Suite file " & sahi_scripts & "\" & file & " could not be found! "  & helpstring
 
@@ -228,6 +230,8 @@ command = "java -cp " & sahi_home & "\lib\ant-sahi.jar net.sf.sahi.test.TestRunn
 	"-port 9999 -threads " & maxthreads & " -useSingleSession " & singlesession 
 ' add guid
 command = command & " -initJS " & Chr(34) & "var $guid=" & Chr(39) & guid & Chr(39) & Chr(59)
+' add sahi userdata dir
+command = command & "var $sahi_userdata=" & Chr(39) & Replace(sahi_userdata, "\", "\\" ) & Chr(39) & Chr(59)
 ' add working mode variable (db/nsca)
 command = command & "var $mode=" & Chr(39) & mode & Chr(39) & Chr(59) & Chr(34)
 
@@ -382,6 +386,23 @@ Sub send2NSCA (inhostname, inservice, instatus, inoutput, inperfdata, innagios)
 	Set Wshell = Nothing
 	Set objFile = Nothing
 End Sub 
+
+Function dir_Exists_or_create(indir)
+	Dim ret, dirnew
+	dbg "Checking presence of screenshot folder '" & indir & "'..."
+	If Not FSObject.FolderExists (indir) Then
+		dbg "Folder does not exist. Creating..."
+		dirnew = FSObject.CreateFolder(indir)
+	Else
+		dbg "Folder exists."
+	End If
+End Function
+
+Sub file_Exists_OrDie(infile, InStr)
+	If Not file_Exists(infile) Then
+		die "UNKNOWN: " & InStr, 3
+	End If
+End Sub
 
 Function file_Exists(infile)
 	Dim ret

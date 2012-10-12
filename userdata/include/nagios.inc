@@ -1,9 +1,12 @@
 _include('sprintf.inc');
 
+
 function initialize($w, $c) {
 	$debug_indent = 0;
 	$casename = _scriptName();
 	$suitename = _suiteInfo().suiteName;
+	screenshot_path = $sahi_userdata + '\\logs\\screenshots\\';
+	screenshot_name = "";
 	
 	if ($casename == $suitename) {
 		$suite = false; 
@@ -28,7 +31,7 @@ function initialize($w, $c) {
 		$resultfile = "..\\..\\temp\\" + $guid + ".results";
 		debug("Result file is " + $resultfile);
 	}
-	
+ 
    $nagiosStartTime = (new Date().getTime() / 1000).toString();
    debug("$nagiosStartTime = " + $nagiosStartTime);
    _set($startURL, window.document.location.href);
@@ -83,7 +86,6 @@ debug("========= function '" + arguments.callee.name + "' ===================");
    var $nagiosStopTime = (new Date().getTime() / 1000).toString();
    var $duration = ($nagiosStopTime - $nagiosStartTime).toFixed(2); 
    debug("$nagiosStopTime = " + $nagiosStopTime + ", total case duration is " + $duration + " seconds.");
-
    debug("Determing case status:");
    if (ScriptRunner.hasErrors() > 0) {
 	   // 1. Fatal exceptions? 	   
@@ -103,6 +105,9 @@ debug("========= function '" + arguments.callee.name + "' ===================");
           if ($errmesg2) { $errmesg2 = ", " + $errmesg2.replace("\n", "").replace("\"", "'");   }
           
           $errmesg = " (" + $errmesg1 + $errmesg2 + ")";
+		  if (screenshot_name) {
+			$errmesg = $errmesg + " A screenshot was captured (" + screenshot_name + ").";
+		  }
        } else {
           $errmesg = "";
        }    
@@ -348,3 +353,15 @@ function debug($message) {
 function str_repeat (input, multiplier) {
     return new Array(multiplier + 1).join(input);
 }
+
+function TakeScreenshot() {
+$debug_indent++;
+debug("========= function '" + arguments.callee.name + "' ===================");
+    screenshot_name = Packages.net.sf.sahi.util.Utils.createLogFileName($casename) + '.jpg';
+	var $fullname = screenshot_path + screenshot_name;	
+	_call(window.focus());
+	debug("Will make a screenshot with " + '\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
+    _execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
+$debug_indent--;
+}
+
