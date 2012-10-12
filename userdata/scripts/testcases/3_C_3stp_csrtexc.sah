@@ -24,6 +24,7 @@ _click(_submit("Anmelden"));
 step("Anmelden",5);
 
  } catch($error) {
+ 	TakeScreenshot();
     _logExceptionAsFailure($error) 
     $output = $error['message'];
   if (! $output) { $output = $error; }

@@ -10,8 +10,10 @@ try {
 throw("Exception vorhanden!")
  
  } catch($error) {
-    _logExceptionAsFailure($error) 
+	TakeScreenshot();
+	_logExceptionAsFailure($error) 
     $output = $error['message'];
+	
   if (! $output) { $output = $error; }
 } finally { saveResult($output); }
 
