@@ -199,8 +199,6 @@ If singlesession = "" Then
 	singlesession = "false"
 End If
 
-
-
 If (warning > critical) Then
 	WScript.echo "ERROR: Warning threshold (-w) must be lower than critical threshold (-c). "  & helpstring
 	WScript.quit(1)

@@ -371,14 +371,14 @@ function str_repeat (input, multiplier) {
 function TakeScreenshot() {
 $debug_indent++;
 debug("========= function '" + arguments.callee.name + "' ===================");
-debug($capture);
+
 	if($capture) {
 		if(browser.match(/(firefox|chrome|safari|iexplore)/)) {
 			screenshot_name = Packages.net.sf.sahi.util.Utils.createLogFileName($casename) + '.jpg';
 			var $fullname = screenshot_path + screenshot_name;	
 			_call(window.focus());
 			debug("Will make a screenshot with " + '\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
-			_execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
+			_execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /jpgq=30 /capture=2 ' + '/convert=' + $fullname);
 			if ($mode == "db") {
 				debug("Mode = DB, will also create a BASE64 coded version of this file.");
 				debug('\"C:\\sahi\\userdata\\bin\\base64.exe\" -e ' + $fullname + ' > '+$fullname + '.base64');
