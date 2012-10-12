@@ -5,6 +5,7 @@ function initialize($w, $c) {
 	$debug_indent = 0;
 	$casename = _scriptName();
 	$suitename = _suiteInfo().suiteName;
+	
 	screenshot_path = $sahi_userdata + '\\logs\\screenshots\\';
 	screenshot_name = "";
 	
@@ -217,17 +218,30 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	}
 	// write Case result
 	debug("Storing Case result in DB...");
+/* 	$stmt = sprintf("INSERT INTO sahi_cases (result, name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration,msg)" + 
+		"VALUES ('%s', '%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f','%s')",
+		$case_result, $casename, $guid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg); */
+		
 	$stmt = sprintf("INSERT INTO sahi_cases (result, name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration,msg)" + 
 		"VALUES ('%s', '%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f','%s')",
 		$case_result, $casename, $guid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg);
+		
 	debug("SQL: " + $stmt);
 	$dbres = $db.update($stmt);
 	// get Case ID
 	$stmt = "SELECT MAX(id) AS case_id from sahi_cases";
-	debug("SQL: " + $stmt)
+	debug("SQL: " + $stmt);
 	$dbres = $db.select($stmt);
 	$case_id = $dbres[0]['case_id'];
 	debug("Case stored under ID " + $case_id);
+	
+ 	//store screenhot, if taken
+	if (screenshot_name) {
+		debug("Updating failed case " + $case_id + " with screenhot. ");
+		$stmt = "UPDATE sahi_cases SET screenshot=LOAD_FILE('" + screenshot_path.replace(/\\/g,'/') + screenshot_name + "') WHERE id=" + $case_id ;
+		debug($stmt);
+		$db.update($stmt);			
+	} 
 	
 	// write Step table
 	debug("Storing step results in DB...");
@@ -362,6 +376,13 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	_call(window.focus());
 	debug("Will make a screenshot with " + '\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
     _execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
+	if ($mode == "db") {
+		debug("Mode = DB, will also create a BASE64 coded version of this file.");
+		debug('\"C:\\sahi\\userdata\\bin\\base64.exe\" -e ' + $fullname + ' > '+$fullname + '.base64');
+		//_execute("C:\\sahi\\userdata\\bin\\base64.exe -e " + $fullname + " > "+$fullname + ".base64", true);
+		_execute("C:/sahi/userdata/bin/base64.exe -e C:/testfoo.jpg > C:/testfoo.base64");
+		
+	}
 $debug_indent--;
 }
 
