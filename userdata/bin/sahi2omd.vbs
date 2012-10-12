@@ -1,13 +1,13 @@
 Option Explicit
 ' NSCA
-' -mode nsca -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
+' -mode nsca -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -capture -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
 ' DB
-' -mode db -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
+' -mode db -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -capture -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
 
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
 Dim debug, version, FSObject, debugfile, objdebug, mysql_connector,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
-Dim command,guid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, outputstring
+Dim command,guid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, capture, outputstring
 Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
 
 guid = get_guid()
@@ -142,6 +142,8 @@ Do While i < WScript.Arguments.Count
 		singlesession = True
 	ElseIf WScript.Arguments(i) = "/p" Or WScript.Arguments(i) = "-p" Then
 		printcfg = True
+	ElseIf WScript.Arguments(i) = "/capture" Or WScript.Arguments(i) = "-capture" Then
+		capture = True
 	ElseIf WScript.Arguments(i) = "/m" Or WScript.Arguments(i) = "-m" Then
 		i = i + 1
 		maxthreads = WScript.Arguments(i)		
@@ -197,6 +199,8 @@ If singlesession = "" Then
 	singlesession = "false"
 End If
 
+
+
 If (warning > critical) Then
 	WScript.echo "ERROR: Warning threshold (-w) must be lower than critical threshold (-c). "  & helpstring
 	WScript.quit(1)
@@ -232,6 +236,8 @@ command = "java -cp " & sahi_home & "\lib\ant-sahi.jar net.sf.sahi.test.TestRunn
 command = command & " -initJS " & Chr(34) & "var $guid=" & Chr(39) & guid & Chr(39) & Chr(59)
 ' add sahi userdata dir
 command = command & "var $sahi_userdata=" & Chr(39) & Replace(sahi_userdata, "\", "\\" ) & Chr(39) & Chr(59)
+' add capture mode
+command = command & "var $capture=" & Chr(39) & capture & Chr(39) & Chr(59)
 ' add working mode variable (db/nsca)
 command = command & "var $mode=" & Chr(39) & mode & Chr(39) & Chr(59) & Chr(34)
 
@@ -588,35 +594,36 @@ Sub about()
 					 "2012 by Simon Meggle, ConSol GmbH <simon.meggle@consol.de>" & VbCrLf & _
 					 "Usage:" & VbCrLf & VbCrLf & _
 		             "sahi2omd.vbs [-mode (nsca|db)] [-f <sahi file>] [-u <startURL>] [-b <browser>]" & VbCrLf & _
-		             "        [-w <warning (sec)>] [-c <critical (sec)>]" & VbCrLf & _
-		             "        [-n <monitoring server>] [-h <hostname>]" & VbCrLf & _
-		             "        [-s <servicedescription>] [-z ] [-m <maxsessions> ] [-e] [-p]" & VbCrLf & _					 
+		             "            [-w <warning (sec)>] [-c <critical (sec)>]" & VbCrLf & _
+		             "            [-n <monitoring server>] [-h <hostname>]" & VbCrLf & _
+		             "            [-s <servicedescription>] [-z ] [-m <maxsessions> ] [-e] [-p]" & VbCrLf & _					 
 		             "" & VbCrLf & _
 		             "Parameters:" & VbCrLf & _
-					 "-mode   nsca: send results via NSCA, db: save results in local database." & VbCrLf & _
-		             "-f      Sahi test case (.sah) or test suite (.suite) file. " & VbCrLf & _
-		             "        Relative to sahi_scripts (see config config section in this script)" & VbCrLf & _
-		             "        e.g. '-f intranet\instranet_login.sah" & VbCrLf & _
+					 "-mode       nsca: send results via NSCA, db: save results in local database." & VbCrLf & _
+		             "-f          Sahi test case (.sah) or test suite (.suite) file. " & VbCrLf & _
+		             "            Relative to sahi_scripts (see config config section in this script)" & VbCrLf & _
+		             "            e.g. '-f intranet\instranet_login.sah" & VbCrLf & _
 		             "" & VbCrLf & _
-		             "-u      URL the test/suite should start from." & VbCrLf & _
-		             "        e.h. http://intranet.mydomain.local" & VbCrLf & _
+		             "-u          URL the test/suite should start from." & VbCrLf & _
+		             "            e.h. http://intranet.mydomain.local" & VbCrLf & _
 		             "" & VbCrLf & _
-		             "-b      Browser type. See Sahi Dashboard -> configure for allowed values." & VbCrLf & _
+		             "-b          Browser type. See Sahi Dashboard -> configure for allowed values." & VbCrLf & _
 		             "" & VbCrLf & _ 
-		             "-w      warning runtime threshold (seconds) for the whole check." & VbCrLf & _
-		             "-c      critical runtime threshold (seconds) for the whole check." & VbCrLf & _
+		             "-w          warning runtime threshold (seconds) for the whole check." & VbCrLf & _
+		             "-c          critical runtime threshold (seconds) for the whole check." & VbCrLf & _
 		             "" & VbCrLf & _
-		             "-n      receiving monitoring server" & VbCrLf & _
-		             "-h      hostname" & VbCrLf & _
-		             "-s      servicedescription" & VbCrLf & _
-					 "-p      create Nagios host and service objects in file sahi2omd.cfg" & VbCrLf & _
+		             "-n          receiving monitoring server" & VbCrLf & _
+		             "-h          hostname" & VbCrLf & _
+		             "-s          servicedescription" & VbCrLf & _
+					 "-p          create Nagios host and service objects in file sahi2omd.cfg" & VbCrLf & _
 		             "" & VbCrLf & _
-		             "-z      use singlesession (does not re-open the browser for each test case." & VbCrLf & _
-					 "        (default: false)" & VbCrLf & _
-		             "-m      maximum number of simultaneous threads (default: 1)" & VbCrLf & _
-					 "-e      expand suite testcases into separate services " & VbCrLf & _
-					 "        service_description= Sahi testcase filename (.sah) (default: false)" & VbCrLf & _
+		             "-z          use singlesession (does not re-open the browser for each test case." & VbCrLf & _
+					 "            (default: false)" & VbCrLf & _
+		             "-m          maximum number of simultaneous threads (default: 1)" & VbCrLf & _
+					 "-e          expand suite testcases into separate services " & VbCrLf & _
+					 "            service_description= Sahi testcase filename (.sah) (default: false)" & VbCrLf & _
 					 " " & VbCrLf & _					 
+					 "-capture    create a screenshot if a case fails." & VbCrLf & _
 		             "For any other settings see config section in this script. " & VbCrLf 
 End Sub
 
