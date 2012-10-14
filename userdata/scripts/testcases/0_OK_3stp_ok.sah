@@ -7,7 +7,7 @@ try {
 // (0,0) = kein Threshold
   initialize(35,45);
   
- _assertExists(_link("Anmelden"));
+ _assertExists(_link("XXXXXXXAnmelden"));
 _assert(_isVisible(_link("Anmelden")));
 _click(_link("Anmelden"));
 _click(_textbox("lgn_usr[1]"));
