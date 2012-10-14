@@ -376,15 +376,13 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 		if(browser.match(/(firefox|chrome|safari|iexplore)/)) {
 			screenshot_name = Packages.net.sf.sahi.util.Utils.createLogFileName($casename) + '.jpg';
 			var $fullname = screenshot_path + screenshot_name;	
-			_call(window.focus());
-			debug("Will make a screenshot with " + '\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
+			
+			//_call(window.document.title = window.document.title.replace(/|/,''));
+			_set($browsertitle,window.document.title );
+			debug("Bringing browser window '" + $browsertitle + "' to foreground with: '" + $sahi_userdata + '\\bin\\modwindow.vbs \''+ $browsertitle +'\' maximize');
+			_execute('cscript.exe ' + $sahi_userdata + '\\bin\\modwindow.vbs \''+ $browsertitle +'\' maximize', true);
+			debug("Will make a screenshot with :" + '\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
 			_execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /jpgq=30 /capture=2 ' + '/convert=' + $fullname);
-			if ($mode == "db") {
-				debug("Mode = DB, will also create a BASE64 coded version of this file.");
-				debug('\"C:\\sahi\\userdata\\bin\\base64.exe\" -e ' + $fullname + ' > '+$fullname + '.base64');
-				//_execute("C:\\sahi\\userdata\\bin\\base64.exe -e " + $fullname + " > "+$fullname + ".base64", true);
-				_execute("C:/sahi/userdata/bin/base64.exe -e C:/testfoo.jpg > C:/testfoo.base64");
-			}
 		} else {
 			// phantomJS render FIXME
 		}

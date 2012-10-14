@@ -7,7 +7,7 @@ Option Explicit
 Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
 Dim debug, version, FSObject, debugfile, objdebug, mysql_connector,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
-Dim command,guid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, capture, outputstring
+Dim command,guid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, capture, modwindow
 Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
 
 guid = get_guid()
@@ -53,7 +53,8 @@ mysql_connector = sahi_home & "\extlib\db\mysql-connector-java-5.1.21-bin.jar"
 mysql_user = "sahi"
 ' MySQL password
 mysql_password = "sahipw"
-
+' modwindow script
+modwindow = sahi_userdata & "\bin\modwindow.vbs"
 
 ' ##############################################################################
 ' Don't change anything below
@@ -210,13 +211,18 @@ End If
 If (is_mode_nsca) Then 
 	nsca_health_or_die
 Else
-	file_Exists_OrDie mysql_connector, "sahi2omd.vbs was called with mode 'db', but no MySQL Connector file was found." & _
+	file_Exists_OrDie mysql_connector, "Script ERROR: sahi2omd.vbs was called with mode 'db', but no MySQL Connector file was found." & _
 		"Please specify the correct mysql_connector in the config section of sahi2omd.vbs." 
 End If 
 
+If capture Then
+	file_Exists_OrDie modwindow, "Script ERROR: Could not find '" & modwindow & "'!"
+End If
+
+
 If Not sahi_health Then
-	dbg "ERROR: Sahi does not run. Exiting. "
-	die "UNKNOWN: Sahi does not run. Verify that Sahi is started and ready to run the tests. "  & helpstring, 3
+	dbg "Script ERROR: Sahi does not run. Exiting. "
+	die "Script ERROR: Sahi does not run. Verify that Sahi is started and ready to run the tests. "  & helpstring, 3
 Else
 	dbg "Sahi process is running properly. "
 End If
