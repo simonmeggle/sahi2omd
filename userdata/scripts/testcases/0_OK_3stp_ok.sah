@@ -1,5 +1,4 @@
 _include('../../include/nagios.inc');
-
 $debug = true;
 
 try {
