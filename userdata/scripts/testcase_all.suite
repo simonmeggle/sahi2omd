@@ -4,4 +4,4 @@ testcases/2_W_3stp_crtexc.sah http://oxid/shop/
 testcases/3_C_3stp_csrtexc.sah http://oxid/shop/
 testcases/4_C_3stp_except.sah http://oxid/shop/
 testcases/5_random.sah http://oxid/shop/
-
+testcases/7_U_linknotfound.sah http://oxid/shop/

@@ -96,23 +96,27 @@ debug("========= function '" + arguments.callee.name + "' ===================");
           // Splitten der Meldung über "\n" in ein Array. Die ersten beiden Zeilen
           // der error-Message sollten ausreichend sein (eine manuelle Exception
           // enthält nur eine Zeile, das zweite Array-Element ist somit leer)
-		  $msg = $msg.replace(';',',');
-		  $msg = $msg.replace(',,',',');
-		  $msg = $msg.replace("'","");
+		  //$msg = $msg.replace(';',',');
+		  //$msg = $msg.replace(',,',',');
+		  //$msg = $msg.replace("'","\'");
+		  //$msg = $msg.replace('"','\"');
+		  //debug("Cleaned msg: " + $msg);
           var $msgparts = $msg.split('\n'); 
           $errmesg1 = $msgparts[0];
           $errmesg2 = $msg.split('\n')[1] || "";    
-          if ($errmesg1) { $errmesg1 = $errmesg1.replace("\n", "").replace("\"", "'"); }
-          if ($errmesg2) { $errmesg2 = ", " + $errmesg2.replace("\n", "").replace("\"", "'");   }
+          //if ($errmesg1) { $errmesg1 = $errmesg1.replace("\n", "").replace("\"", "\'"); }
+          if ($errmesg2) { $errmesg2 = ", " + $errmesg2; }
           
           $errmesg = " (" + $errmesg1 + $errmesg2 + ")";
 		  if (screenshot_name) {
 			$errmesg = $errmesg + " A screenshot was captured (" + screenshot_name + ").";
 		  }
+		  $errmesg.replace("\n", ",").replace("\"","\"").replace("'","\'").replace(";","");
        } else {
           $errmesg = "";
        }    
 		if (is_mode_db() ) {
+			debug("Errormessage: " + $errmesg);
 			$case_result_db = 4;
 			$msg = $errmesg;
 			debug("Case had exception -> case_result_db=" + $case_result_db + ", case_result=" + $case_result + ", msg = " + $msg);
@@ -169,6 +173,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("  $suitename = " + $suitename);
 	debug("  $casename = " + $casename);
 	debug("  $case_result = " + $case_result);
+	debug("  $case_result_db = " + $case_result_db);
 	debug("  $duration = " + $duration);
 	debug("  $warn = " + $warn);
 	debug("  $crit = " + $crit);
@@ -186,12 +191,12 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 $debug_indent--;
 }
 
-function write2DB($suitename, $casename, $case_result, $duration, $nagiosStartTime, $nagiosStopTime,$warn, $crit, $msg, $browser, $lastpage, $guid) {
+function write2DB($suitename, $casename, $case_result_db, $duration, $nagiosStartTime, $nagiosStopTime,$warn, $crit, $msg, $browser, $lastpage, $guid) {
 //		testcase1-4.suite, 1_OK_3stp_ok.sah, 0, 35, 45, 1,81, NaN, NaN, http://oxid/shop/, 1271BFEB-20FB-45D6-BC30-13D7C746BDC8, undefined, undefined
 // ugly: $steps is not an argument
 $debug_indent++;
 debug("========= function '" + arguments.callee.name + "' ===================");
-	debug("got args: " + $suitename+", "+$casename+", "+$case_result+", "+$duration+", "+$nagiosStartTime+", "+$nagiosStopTime +", "+parseInt($warn)+", "+parseInt($crit)+", "+$msg+", "+$browser+", "+$lastpage+", "+$guid);
+	debug("got args: " + $suitename+", "+$casename+", "+$case_result_db+", "+$duration+", "+$nagiosStartTime+", "+$nagiosStopTime +", "+parseInt($warn)+", "+parseInt($crit)+", "+$msg+", "+$browser+", "+$lastpage+", "+$guid);
 	var $stmt, $dbres, $suite_id;
 	$suite_id = "NULL";
 	// if suite: write only once
@@ -220,11 +225,11 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 	debug("Storing Case result in DB...");
 /* 	$stmt = sprintf("INSERT INTO sahi_cases (result, name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration,msg)" + 
 		"VALUES ('%s', '%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f','%s')",
-		$case_result, $casename, $guid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg); */
+		$case_result_db, $casename, $guid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg); */
 		
 	$stmt = sprintf("INSERT INTO sahi_cases (result, name, guid, start, stop, warning, critical, browser, lastpage, sahi_suites_id, duration,msg)" + 
 		"VALUES ('%s', '%s','%s','%s','%s','%d','%d','%s','%s',"+$suite_id+",'%0.2f','%s')",
-		$case_result, $casename, $guid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg);
+		$case_result_db, $casename, $guid, $nagiosStartTime, $nagiosStopTime,$warn,$crit,$browser,$lastpage, $duration, $msg);
 		
 	debug("SQL: " + $stmt);
 	$dbres = $db.update($stmt);
