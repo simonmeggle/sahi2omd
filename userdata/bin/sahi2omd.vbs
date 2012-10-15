@@ -352,7 +352,7 @@ Sub data2OMD (resultfile)
 		If printcfg Then
 			printConfiguration hostname, service
 		End If 
-		' fixme: Alternative send2DB
+		
 		send2NSCA hostname, service, worststate, output, perfdata, nagios
 	Else
 		dbg "expandsuite option is set - will treat each sahi test as a separate service..."

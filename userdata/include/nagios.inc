@@ -107,11 +107,12 @@ debug("========= function '" + arguments.callee.name + "' ===================");
           //if ($errmesg1) { $errmesg1 = $errmesg1.replace("\n", "").replace("\"", "\'"); }
           if ($errmesg2) { $errmesg2 = ", " + $errmesg2; }
           
-          $errmesg = " (" + $errmesg1 + $errmesg2 + ")";
+          $errmesg = " (" + $errmesg1 + $errmesg2 + "). ";
 		  if (screenshot_name) {
 			$errmesg = $errmesg + " A screenshot was captured (" + screenshot_name + ").";
 		  }
-		  $errmesg.replace("\n", ",").replace("\"","\"").replace("'","\'").replace(";","");
+		  $errmesg = $errmesg.replace(/\n/g, "").replace(/"/g,'').replace(/'/g,"").replace(/;/g,"");
+		  
        } else {
           $errmesg = "";
        }    
@@ -121,6 +122,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 			$msg = $errmesg;
 			debug("Case had exception -> case_result_db=" + $case_result_db + ", case_result=" + $case_result + ", msg = " + $msg);
 		} else {
+			debug("Errormessage: " + $errmesg);
 			$case_result = 2;   
 			$msg = sprintf('ended with errors%s', $errmesg );
 			debug("Case had exception -> case_result=" + $case_result + ", msg = " + $msg);
@@ -387,7 +389,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 			debug("Bringing browser window '" + $browsertitle + "' to foreground with: '" + $sahi_userdata + '\\bin\\modwindow.vbs \''+ $browsertitle +'\' maximize');
 			_execute('cscript.exe ' + $sahi_userdata + '\\bin\\modwindow.vbs \''+ $browsertitle +'\' maximize', true);
 			debug("Will make a screenshot with :" + '\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
-			_execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /jpgq=30 /capture=2 ' + '/convert=' + $fullname);
+			_execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /jpgq=10 /capture=2 ' + '/convert=' + $fullname);
 		} else {
 			// phantomJS render FIXME
 		}
