@@ -1,0 +1,65 @@
+_include('../../include/nagios.inc');
+$debug = true;
+
+
+try {
+// Parameter 1/2: warning/critical-Schwellwerte für diesen Testcase
+// (0,0) = kein Threshold
+initialize(60,90);
+
+//Login
+_click(_link("Anmelden"));
+_click(_label("E-Mail-Adresse"));
+_setValue(_textbox("lgn_usr[1]"), "sahimon.itoring@googlemail.com");
+_setValue(_password("lgn_pwd"), "sahimon");
+_click(_submit("Anmelden"));
+step("Login",6);  
+
+//Warenkorb löschen
+_click(_link("Warenkorb"));
+if (! _condition(_isVisible(_div("Der Warenkorb ist leer."))) ) {
+	_click(_checkbox("checkAll"));
+	_click(_submit("entfernen"));
+}
+step("Warenkorb leeren",4);  
+
+_click(_link("Startseite"));
+
+//Artikel 1
+_click(_link("Kiteboarding \u00BB"));
+_click(_image("Zubeh\u00F6r"));
+_click(_link("Klebeband DACRON KITEFIX"));
+_click(_span("Variante w\u00E4hlen"));
+_click(_link("schwarz"));
+_setValue(_textbox("am"), "3");
+_click(_submit("in den Warenkorb"));
+step("Art Klebeband DACRON",15);
+
+//Artikel 2
+_click(_link("Wakeboarding \u00BB"));
+_click(_image("Wakeboards"));
+_click(_span("Wakeboard LIQUID FORCE GROOVE 2010"));
+_click(_submit("in den Warenkorb"));
+step("Art Wakeboard GROOVE 2010",12);
+
+//Artikel 3
+_click(_link("Bekleidung \u00BB"));
+_click(_link("F\u00FCr Sie"));
+_click(_image("Shirts & Co."));
+_click(_link("Kuyichi 1/2 Sleeve Shirt"));
+_click(_submit("in den Warenkorb"));
+step("Art Shirt Kuyichi",13);
+
+//prüfe Warenkorb
+_click(_link("Warenkorb"));
+_assert(_isVisible(_link("Klebeband DACRON KITEFIX, schwarz")));
+_assert(_isVisible(_link("Wakeboard LIQUID FORCE GROOVE 2010")));
+_assert(_isVisible(_link("Kuyichi 1/2 Sleeve Shirt")));
+step("Warenkorb checken",3);
+
+//Ausloggen
+_click(_link("Logout"));
+
+} catch($error) {
+	handle_exception($error);
+} finally { saveResult($output); }
