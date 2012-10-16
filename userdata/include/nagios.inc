@@ -1,7 +1,24 @@
 _include('sprintf.inc');
 
+function onScriptFailure($exc){
+//	_alert("onScriptFailure");
+//	if ($exception_on_assert) {
+//	_alert("... handle exception.");
+		handle_exception($exc);
+//	} 
+} 
+	 
+function handle_exception($exc){
+ 	TakeScreenshot();
+    _logExceptionAsFailure($exc); 
+    $output = $exc['message'];
+	
+  if (! $output) { $output = $exc; }
+  if (! $output) { $output = " "; }
+} 
 
 function initialize($w, $c) {
+	//onScriptError = onScriptFailure;
 	$debug_indent = 0;
 	$casename = _scriptName();
 	$suitename = _suiteInfo().suiteName;
@@ -51,6 +68,8 @@ function initialize($w, $c) {
    debug("...");
    debug("...");
 }
+
+
 
 function step($stepname,$stepthreshold) {
 // call this function everytime a step should be _finished_ within a certain time. 
@@ -108,14 +127,16 @@ debug("========= function '" + arguments.callee.name + "' ===================");
           if ($errmesg2) { $errmesg2 = ", " + $errmesg2; }
           
           $errmesg = " (" + $errmesg1 + $errmesg2 + "). ";
-		  if (screenshot_name) {
-			$errmesg = $errmesg + " A screenshot was captured (" + screenshot_name + ").";
-		  }
 		  $errmesg = $errmesg.replace(/\n/g, "").replace(/"/g,'').replace(/'/g,"").replace(/;/g,"");
 		  
        } else {
           $errmesg = "";
        }    
+	   
+	    if (screenshot_name) {
+			$errmesg = $errmesg + " - A screenshot was captured (" + screenshot_name + ").";
+		}
+	   
 		if (is_mode_db() ) {
 			debug("Errormessage: " + $errmesg);
 			$case_result_db = 4;
@@ -389,7 +410,7 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 			debug("Bringing browser window '" + $browsertitle + "' to foreground with: '" + $sahi_userdata + '\\bin\\modwindow.vbs \''+ $browsertitle +'\' maximize');
 			_execute('cscript.exe ' + $sahi_userdata + '\\bin\\modwindow.vbs \''+ $browsertitle +'\' maximize', true);
 			debug("Will make a screenshot with :" + '\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
-			_execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /jpgq=10 /capture=2 ' + '/convert=' + $fullname);
+			_execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /jpgq=10 /capture=2 ' + '/convert=' + $fullname, true);
 		} else {
 			// phantomJS render FIXME
 		}
@@ -399,3 +420,18 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 $debug_indent--;
 }
 
+function makeid(len) {
+    var ret = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for( var i=0; i < len; i++ )
+        ret += possible.charAt(Math.floor(Math.random() * possible.length));
+    return ret;
+}
+
+function makenumber(len) {
+    var ret = "";
+    var possible = "123456789";
+    for( var i=0; i < len; i++ )
+        ret += possible.charAt(Math.floor(Math.random() * possible.length));
+    return ret;
+}
