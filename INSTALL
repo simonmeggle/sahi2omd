@@ -1,0 +1,61 @@
+Install instructions
+==========================
+
+1. Prerequisites
+You should have installed 
+  * Java (http://www.java.com/de/download/)
+  * Sahi (http://sahi.co.in/), fully installed in C:\sahi
+    * Variables to set in 
+  * all browsers you like to test with; each of them should be registered in Sahi Dashboard
+  
+2. Installation
+2.1 Core files
+Unzip the content of sahi2omd.zip into your Sahi installation folder (e.g. C:\sahi). 
+Open SAHI_HOME\userdata\bin\sahi2omd.vbs and change variable sahi_home to the Sahi installation folder (e.g. C:\sahi).
+2.2 MySQL 
+If you want to store all sahi results into a mysql database, which can be queried actively from the monitoring system: 
+2.1.1 Database
+  * Install MySQL either on the same machine or on any other machine which is reachable from both your Sahi test machine and your monitoring system. 
+  * Import sahidb.sql to create the sahi datbase. 
+  * Create a user (e.g. "sahi", password "sahidb") and grant all privileges to this user to database "sahi". 
+2.1.2 Database driver
+  * Create SAHI_HOME\extlib\db, download "MySQL ODBC 5.1 Driver" and extract "mysql-connector-java-5.1.21-bin.jar" in to this folder. 
+  * Open SAHI_HOME\userdata\bin\sahi2omd.vbs and set the variables mysql_host, mysql_odbc_driver, mysql_connector, mysql_user, mysql_password
+  * Add the path to the mysql driver to SAHI_EXT_CLASS_PATH in 
+    * SAHI_HOME\userdata\bin\start_sahi.bat
+	* SAHI_HOME\userdata\bin_start_dashboard.bat
+SET SAHI_EXT_CLASS_PATH=%EXT_CLASS_PATH%;..\..\extlib\db\mysql-connector-java-5.1.21-bin.jar
+  
+  
+2.3 NSCA
+If you like to transfer sahi results as passive check results into your monitoring system: 
+  * Download NSCA Win32 Client  from http://exchange.nagios.org/directory/Addons/Passive-Checks/NSCA-Win32-Client/details
+  * extract all three files into C:\%PROGRAMFILES%\send_nsca
+  * set password and encryption method in "send_nsca.cfg" as set in your monitoring system
+  * Variables to set in sahi2omd.vbs:
+    * send_nsca_bin
+	* send_nsca_cfg
+	* send_nsca_port
+
+3. Additional modifications
+3.1 Firefox
+3.1.1 Disable fullscreen animation 
+If you want Sahi2OMD to take screenshots of Firefox sessions, disable the fullscreen animation: 
+Open SAHIHOME\config\ff_profile_template\prefs.js and add the following line: 
+user_pref("browser.fullscreen.animateUp", 0);
+
+3.2 Windows
+3.2.1 Enable Window activation 
+Bringing windows to foreground by a script is not allowed by default due to security/usability reasons. For taking screenshots with Irfanview, this must be changed: 
+  * open thw windows registry editor "regedit"
+  * navigate to HKEY_CURRENT_USER\Control Panel\Desktop\
+  * set Key "ForegroundLockTimeout" (DWORD) to "0"
+  
+3.2.2 Disable Windows maximization animaition
+* open thw windows registry editor "regedit"
+  * navigate to HKEY_USERS\.Default\Control Panel\Desktop\WindowMetrics
+  * Modify/Create the Value Data Type(s) and Value Name(s) as detailed below.
+    * set Key "MinAnimate" (REG_SZ) to "0"
+3.3 others
+3.3.1 Antivirus Software
+If you have problems with HTTPS checks, disable any realtime-protection Antivirus software. Chances are that the automatic acceptance of self-signed certificates issued by sahi is not possible as long as those functions are active. 

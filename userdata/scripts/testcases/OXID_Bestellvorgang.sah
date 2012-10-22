@@ -8,49 +8,73 @@ try {
 initialize(60,90);
 
 //Login
+_highlight(_link("Anmelden"));
 _click(_link("Anmelden"));
+_highlight(_label("E-Mail-Adresse"));
 _click(_label("E-Mail-Adresse"));
 _setValue(_textbox("lgn_usr[1]"), "sahimon.itoring@googlemail.com");
 _setValue(_password("lgn_pwd"), "sahimon");
+_highlight(_submit("Anmelden"));
 _click(_submit("Anmelden"));
 step("Login",6);  
 
 //Warenkorb löschen
+_highlight(_link("Warenkorb"));
 _click(_link("Warenkorb"));
 if (! _condition(_isVisible(_div("Der Warenkorb ist leer."))) ) {
+	_highlight(_checkbox("checkAll"));
 	_click(_checkbox("checkAll"));
+	_highlight(_submit("entfernen"));
 	_click(_submit("entfernen"));
 }
 step("Warenkorb leeren",4);  
 
+_highlight(_link("Startseite"));
 _click(_link("Startseite"));
 
 //Artikel 1
+_highlight(_link("Kiteboarding \u00BB"));
 _click(_link("Kiteboarding \u00BB"));
+_highlight(_image("Zubeh\u00F6r"));
 _click(_image("Zubeh\u00F6r"));
+_highlight(_link("Klebeband DACRON KITEFIX"));
 _click(_link("Klebeband DACRON KITEFIX"));
+_highlight(_span("Variante w\u00E4hlen"));
 _click(_span("Variante w\u00E4hlen"));
+_highlight(_link("schwarz"));
 _click(_link("schwarz"));
+_highlight(_textbox("am"), "3");
 _setValue(_textbox("am"), "3");
+_highlight(_submit("in den Warenkorb"));
 _click(_submit("in den Warenkorb"));
 step("Art Klebeband DACRON",15);
 
 //Artikel 2
+_highlight(_link("Wakeboarding \u00BB"));
 _click(_link("Wakeboarding \u00BB"));
+_highlight(_image("Wakeboards"));
 _click(_image("Wakeboards"));
+_highlight(_span("Wakeboard LIQUID FORCE GROOVE 2010"));
 _click(_span("Wakeboard LIQUID FORCE GROOVE 2010"));
+_highlight(_submit("in den Warenkorb"));
 _click(_submit("in den Warenkorb"));
 step("Art Wakeboard GROOVE 2010",12);
 
 //Artikel 3
+_highlight(_link("Bekleidung \u00BB"));
 _click(_link("Bekleidung \u00BB"));
+_highlight(_link("F\u00FCr Sie"));
 _click(_link("F\u00FCr Sie"));
+_highlight(_image("Shirts & Co."));
 _click(_image("Shirts & Co."));
+_highlight(_link("Kuyichi 1/2 Sleeve Shirt"));
 _click(_link("Kuyichi 1/2 Sleeve Shirt"));
+_highlight(_submit("in den Warenkorb"));
 _click(_submit("in den Warenkorb"));
 step("Art Shirt Kuyichi",13);
 
 //prüfe Warenkorb
+_highlight(_link("Warenkorb"));
 _click(_link("Warenkorb"));
 _assert(_isVisible(_link("Klebeband DACRON KITEFIX, schwarz")));
 _assert(_isVisible(_link("Wakeboard LIQUID FORCE GROOVE 2010")));
@@ -58,6 +82,7 @@ _assert(_isVisible(_link("Kuyichi 1/2 Sleeve Shirt")));
 step("Warenkorb checken",3);
 
 //Ausloggen
+_highlight(_link("Logout"));
 _click(_link("Logout"));
 
 } catch($error) {

@@ -4,23 +4,31 @@ $debug = true;
 try {
 // Parameter 1/2: warning/critical-Schwellwerte für diesen Testcase
 // (0,0) = kein Threshold
-initialize(18,20);
+initialize(15,30);
 
 //Login
+_highlight(_link("Anmelden"));
 _click(_link("Anmelden"));
+_highlight(_label("E-Mail-Adresse"));
 _click(_label("E-Mail-Adresse"));
 _setValue(_textbox("lgn_usr[1]"), "sahimon.itoring@googlemail.com");
 _setValue(_password("lgn_pwd"), "sahimon");
+_highlight(_submit("Anmelden"));
 _click(_submit("Anmelden"));
 step("Login",6);  
 
 //Maske "Lieferadresse" laden
+_highlight(_span("Konto"));
 _click(_span("Konto"));
+_highlight(_span("Mein Konto"));
 _click(_span("Mein Konto"));
+_highlight(_link("Rechnungs- und Liefereinstellungen"));
 _click(_link("Rechnungs- und Liefereinstellungen"));
 if (_condition(_checkbox("blshowshipaddress").checked)) {
-	_click(_checkbox("blshowshipaddress"));
+	_highlight(_checkbox("blshowshipaddress"));
+_click(_checkbox("blshowshipaddress"));
 }
+_highlight(_submit("changeShippingAddress"));
 _click(_submit("changeShippingAddress"));
 step("MaskeLieferadresse",8);  
 
@@ -34,16 +42,24 @@ _set($streetnumber, $nr);
 _set($zip, "zip_" + $id);
 _set($city, "city_" + $id);
 
+_highlight(_textbox("deladr[oxaddress__oxfname]"));
 _setValue(_textbox("deladr[oxaddress__oxfname]"), $firstname);
+_highlight(_textbox("deladr[oxaddress__oxlname]"));
 _setValue(_textbox("deladr[oxaddress__oxlname]"), $lastname);
+_highlight(_textbox("deladr[oxaddress__oxstreet]"));
 _setValue(_textbox("deladr[oxaddress__oxstreet]"), $street);
+_highlight(_textbox("deladr[oxaddress__oxstreetnr]"));
 _setValue(_textbox("deladr[oxaddress__oxstreetnr]"), $streetnumber);
+_highlight(_textbox("deladr[oxaddress__oxzip]"));
 _setValue(_textbox("deladr[oxaddress__oxzip]"), $zip);
+_highlight(_textbox("deladr[oxaddress__oxcity]"));
 _setValue(_textbox("deladr[oxaddress__oxcity]"), $city);
+_highlight(_submit("Speichern"));
 _click(_submit("Speichern"));
-step("Neue Werte speichern",6);  
+step("Neue Werte speichern",12);  
 
 //Check
+_highlight(_listItem("shippingAddressText"));
 _assertContainsText($firstname, _listItem("shippingAddressText"));
 _assertContainsText($lastname, _listItem("shippingAddressText"));
 _assertContainsText($street, _listItem("shippingAddressText"));
@@ -52,6 +68,7 @@ _assertContainsText($zip, _listItem("shippingAddressText"));
 _assertContainsText($city, _listItem("shippingAddressText"));
 
 //Ausloggen
+_highlight(_link("Logout"));
 _click(_link("Logout"));
 
 } catch($error) {

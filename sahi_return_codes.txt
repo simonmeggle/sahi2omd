@@ -8,7 +8,7 @@ Case-Stati:
 	1		2	WARN		= case exceeded runtime 
 2.2 step duration 
 	1 		1	WARN 			= step exceeded runtime
-							(können nur warning sein!)
+							(only warning)
 	0		0	OK			= no error 
 
 
