@@ -39,7 +39,7 @@ function initialize($w, $c) {
 	$crit = $c;
 
     if (is_mode_db()){ 
-		$db = _getDB("com.mysql.jdbc.Driver", "jdbc:mysql://localhost/sahi", "sahi", "sahipw");
+		$db = _getDB("com.mysql.jdbc.Driver", "jdbc:mysql://" + $mysql_host + "/sahi", $mysql_user, $mysql_password);
 		if (typeof($db) == 'object') {
 			debug("DB driver loaded.");
 		} else {

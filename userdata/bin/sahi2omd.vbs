@@ -1,3 +1,27 @@
+'* Copyright (C) 2012  Simon Meggle, <simon.meggle@consol.de>
+'* 
+'* - get Sahi checks results into a Nagios-compatible monitoring system - 
+'*
+'* this program Is free software; you can redistribute it And/Or
+'* modify it under the terms of the GNU General Public License
+'* As published by the Free Software Foundation; either version 2
+'* of the License, Or (at your Option) any later version.
+'* 
+'* this program Is distributed In the hope that it will be useful,
+'* but WITHOUT ANY WARRANTY; without even the implied warranty of
+'* MERCHANTABILITY Or FITNESS For A PARTICULAR PURPOSE.  See the
+'* GNU General Public License For more details.
+'* 
+'* You should have received a copy of the GNU General Public License
+'* along With this program; If Not, write To the Free Software
+'* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+'
+' SCRIPT:       sahi2omd.vbs
+' DESCRIPTION:  Wrapper script to start Sahi test cases/suites. 
+' USAGE: 		
+' -mode nsca -m 1 -f testcases\case.sah -b firefox -capture -u http://starturl -n monitoringhost -h hostname -s servicedescription 
+' -mode db -m 1 -f testcases\case.sah -b firefox -capture -u http://starturl
+
 Option Explicit
 ' NSCA
 ' -mode nsca -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -capture -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
@@ -5,46 +29,32 @@ Option Explicit
 ' -mode db -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -capture -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
 
 Const bWaitOnReturn = True
-Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg, sahi2omd_cfg,send_nsca_port,mode
+Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg,send_nsca_port,mode
 Dim debug, version, FSObject, debugfile, objdebug, mysql_connector,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
 Dim command,guid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, capture, modwindow
-Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,printcfg
+Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite
 
 guid = get_guid()
-
- ' Überprüfung ob Sahi läuft
- ' Überprüfung ob gültiger Testcase angegeben wurde
- ' Überprüfung ob results erzeugt werden konnten
- ' automatische Erkennung ob suite oder einzel-Test
  
 ' ##############################################################################
-' Configuration 
+' Configuration Part --- please set proper values
 ' ##############################################################################
 
 debug = 1
 
 ' Sahi installation path
 sahi_home = "C:\sahi"
-' Sahi userdata 
-sahi_userdata = sahi_home & "\userdata"
-' Sahi Script directory
-sahi_scripts = sahi_userdata & "\scripts"
-' result file path (remember the double Backslashes!)
-sahi_results = "C:\\sahi\\userdata\\temp"
+
 ' send_nsca executable
 send_nsca_bin = "C:\Programme\send_nsca\send_nsca.exe"
 ' send_nsca config file
 send_nsca_cfg = "C:\Programme\send_nsca\send_nsca.cfg"
 ' send_nsca port
 send_nsca_port = 5667
-' where to write Nagios configuration samples (option -p) FIXME
-sahi2omd_cfg = sahi_userdata & "\sahi2omd.cfg"
-' Debug File 
-debugfile = sahi_userdata & "\temp\" & guid & "sahi2omd.log"
+
+
 ' MySQL Hostname
 mysql_host = "localhost"
-' MySQL Sahi Database Name
-mysql_dbname = "sahi"
 ' MySQL ODBC Driver 
 mysql_odbcdriver = "MySQL ODBC 5.1 Driver"
 ' MySQL Connector; if you use mode 'mysql' this (or a newer) driver has to be present
@@ -53,23 +63,35 @@ mysql_connector = sahi_home & "\extlib\db\mysql-connector-java-5.1.21-bin.jar"
 mysql_user = "sahi"
 ' MySQL password
 mysql_password = "sahipw"
-' modwindow script
-modwindow = sahi_userdata & "\bin\modwindow.vbs"
 
 ' ##############################################################################
 ' Don't change anything below
 ' ##############################################################################
 
+' Sahi userdata 
+sahi_userdata = sahi_home & "\userdata"
+' Sahi Script directory
+sahi_scripts = sahi_userdata & "\scripts"
+' result file path (remember the double Backslashes!)
+sahi_results = sahi_userdata & "\temp"
+' modwindow script
+modwindow = sahi_userdata & "\bin\modwindow.vbs"
+
+' MySQL Sahi Database Name
+mysql_dbname = "sahi"
+
+' Debug File 
+debugfile = sahi_userdata & "\temp\" & guid & "sahi2omd.log"
+
 ' MAIN =====================================================================================
 helpstring = "Get help with parameter /?."
-
 Set FSObject = CreateObject("Scripting.FileSystemObject")
-
 If debug = 1 Then 
 	Set objdebug = FSObject.CreateTextFile(debugfile, True)	
 End If 
-
 dbg "Sahi2OMD.vbs started..."
+
+' Argument parsing ---------------------------------
 dbg "Parsing Arguments..."
 Do While i < WScript.Arguments.Count
 	If WScript.Arguments(i) = "/?" Or WScript.Arguments(i) = "-?" Then
@@ -141,8 +163,6 @@ Do While i < WScript.Arguments.Count
 		expandsuite = True
 	ElseIf WScript.Arguments(i) = "/z" Or WScript.Arguments(i) = "-z" Then
 		singlesession = True
-	ElseIf WScript.Arguments(i) = "/p" Or WScript.Arguments(i) = "-p" Then
-		printcfg = True
 	ElseIf WScript.Arguments(i) = "/capture" Or WScript.Arguments(i) = "-capture" Then
 		capture = True
 	ElseIf WScript.Arguments(i) = "/m" Or WScript.Arguments(i) = "-m" Then
@@ -182,8 +202,6 @@ If url = "" Then
 	WScript.quit(1)
 End If
 
-
-
 If maxthreads = "" Then
 	maxthreads = 1
 End If
@@ -192,9 +210,6 @@ If expandsuite = "" Then
 	expandsuite = "false"
 End If
 
-If printcfg = "" Then
-	printcfg = "false"
-End If
 
 If singlesession = "" Then
 	singlesession = "false"
@@ -205,9 +220,7 @@ If (warning > critical) Then
 	WScript.quit(1)
 End If
 		
-
-
-' Health checks
+' Health checks --------------------------------------------
 If (is_mode_nsca) Then 
 	nsca_health_or_die
 Else
@@ -218,7 +231,6 @@ End If
 If capture Then
 	file_Exists_OrDie modwindow, "Script ERROR: Could not find '" & modwindow & "'!"
 End If
-
 
 If Not sahi_health Then
 	dbg "Script ERROR: Sahi does not run. Exiting. "
@@ -242,6 +254,14 @@ command = command & " -initJS " & Chr(34) & "var $guid=" & Chr(39) & guid & Chr(
 command = command & "var $sahi_userdata=" & Chr(39) & Replace(sahi_userdata, "\", "\\" ) & Chr(39) & Chr(59)
 ' add capture mode
 command = command & "var $capture=" & Chr(39) & capture & Chr(39) & Chr(59)
+
+' add mysql host
+command = command & "var $mysql_host=" & Chr(39) & mysql_host & Chr(39) & Chr(59)
+' add mysql user
+command = command & "var $mysql_user=" & Chr(39) & mysql_user & Chr(39) & Chr(59)
+' add mysql password
+command = command & "var $mysql_password=" & Chr(39) & mysql_password & Chr(39) & Chr(59)
+
 ' add working mode variable (db/nsca)
 command = command & "var $mode=" & Chr(39) & mode & Chr(39) & Chr(59) & Chr(34)
 
@@ -250,9 +270,7 @@ Set Wshell = WScript.CreateObject("WScript.shell")
 Wshell.run command, 1, bWaitOnReturn
 Set Wshell = Nothing
 
-
 If (is_mode_db) Then
-
 	' guid is stored in the very end of each run. This is to prevent check_mysql_health on the Nagios
 	' side to read out suite/case results while the whole suite/case is still running.
 	dbg "...all Sahi cases were executed. Storing ID of this run (" & guid & ") into database."
@@ -260,18 +278,16 @@ If (is_mode_db) Then
 Else
 	' check if NSCA result file was created
 	file_Exists_OrDie resultfile, "sahi2omd.vbs cannot find the result file " & resultfile
-
 	' read TMP-resultfile and send the data to OMD (or DB... todo)
 	dbg "Now reading in result file " & resultfile & " ..."
 	data2OMD(resultfile)
-
 	Set FSObject = Nothing
 End If
 
 dbg "- Script ended. -"
 ' End MAIN ==========================================================================================
 
-' helper functions -----------------------------------------------------------------------------------
+' helper functions ==========================================================================================
 Sub data2OMD (resultfile)
 	Dim arr_results, i, j, worststate, currentstate, durationstate, durationresult, suite, perfdata, check_command, output, case_shortname
 	worststate = 0
@@ -349,10 +365,6 @@ Sub data2OMD (resultfile)
 		End If
 		perfdata = perfdata & check_command
 		
-		If printcfg Then
-			printConfiguration hostname, service
-		End If 
-		
 		send2NSCA hostname, service, worststate, output, perfdata, nagios
 	Else
 		dbg "expandsuite option is set - will treat each sahi test as a separate service..."
@@ -367,13 +379,7 @@ Sub data2OMD (resultfile)
 	End If 
 End Sub
 
-Sub printConfiguration (inhostname, inservice)
-	Dim objFSO, objFile
-	Set objFSO = CreateObject("Scripting.FileSystemObject")
-	Set objFile = objFSO.CreateTextFile(sahi2omd_cfg, True)
-	
-	
-End Sub
+
 
 Sub send2NSCA (inhostname, inservice, instatus, inoutput, inperfdata, innagios)
 	dbg "Sending NSCA data to OMD..."
@@ -458,8 +464,8 @@ End Function
 Function nsca_health
 	' Check if NSCA is useable, but don't die, if not
 	If file_Exists (send_nsca_bin) And file_Exists (send_nsca_cfg) And nsca_params_ok Then
-		resultfile = sahi_results & "\\" & guid & ".results"	
-		nscadatafile = sahi_results & "\\" & guid & ".nsca"
+		resultfile = Replace(sahi_results, "\", "\\" ) & "\\" & guid & ".results"	
+		nscadatafile = Replace(sahi_results, "\", "\\" ) & "\\" & guid & ".nsca"
 		nsca_health = True
 	Else
 		nsca_health = False
@@ -486,8 +492,8 @@ Function nsca_health_or_die
 	End If
 
 	' ok, set NSCA variables
-	resultfile = sahi_results & "\\" & guid & ".results"	
-	nscadatafile = sahi_results & "\\" & guid & ".nsca"
+	resultfile = Replace(sahi_results, "\", "\\" ) & "\\" & guid & ".results"	
+	nscadatafile = Replace(sahi_results, "\", "\\" ) & "\\" & guid & ".nsca"
 	nsca_health_or_die = True
 End Function
 
@@ -619,7 +625,6 @@ Sub about()
 		             "-n          receiving monitoring server" & VbCrLf & _
 		             "-h          hostname" & VbCrLf & _
 		             "-s          servicedescription" & VbCrLf & _
-					 "-p          create Nagios host and service objects in file sahi2omd.cfg" & VbCrLf & _
 		             "" & VbCrLf & _
 		             "-z          use singlesession (does not re-open the browser for each test case." & VbCrLf & _
 					 "            (default: false)" & VbCrLf & _
