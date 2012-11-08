@@ -1,2 +1,0 @@
-@echo off
-C:\Windows\System32\cscript.exe //Nologo C:\sahi\userdata\bin\sahi2omd.vbs -mode nsca -m 100 -f testcases\nsca_PJS_3_C_3stp_csrtexc.sah -b phantomjs -u http://oxid/shop/ -n omd1 -h sahidose -s nsca_PJS_3_C_3stp_csrtexc.sah

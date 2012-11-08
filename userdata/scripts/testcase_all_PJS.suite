@@ -1,7 +1,0 @@
-testcases/nsca_PJS_0_OK_3stp_ok.sah http://oxid/shop/
-testcases/nsca_PJS_1_W_3stp_rtexc.sah http://oxid/shop/
-testcases/nsca_PJS_2_W_3stp_crtexc.sah http://oxid/shop/
-testcases/nsca_PJS_3_C_3stp_csrtexc.sah http://oxid/shop/
-testcases/nsca_PJS_4_C_3stp_except.sah http://oxid/shop/
-testcases/nsca_PJS_5_random.sah http://oxid/shop/
-testcases/nsca_PJS_7_U_linknotfound.sah http://oxid/shop/
