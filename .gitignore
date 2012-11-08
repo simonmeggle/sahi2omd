@@ -1,9 +1,9 @@
 /batch_runners
-*certs*
+/bin
+/config
 *demo*
 /editors
-/extlib/apc
-/extlib/rhino
+/extlib
 /htdocs
 /docs
 /htdocs
@@ -19,8 +19,11 @@
 /sample_java_project
 /src
 /test
+/userdata/bin
+/userdata/certs
 /userdata/browser
+/userdata/config
 /userdata/logs
 /userdata/temp
-/userdata/bin/sahi.debug
+/userdata/scripts
 *Kopie*
