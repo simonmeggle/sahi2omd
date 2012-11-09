@@ -9,34 +9,64 @@ You should have installed
   * all browsers you like to test with; each of them should be registered in Sahi Dashboard
   
 2. Installation
-2.1 Core files
-Unzip the content of sahi2omd.zip into your Sahi installation folder (e.g. C:\sahi). 
-Open SAHI_HOME\userdata\bin\sahi2omd.vbs and change variable sahi_home to the Sahi installation folder (e.g. C:\sahi).
+2.1 Download files
+Download the source ZIP from https://github.com/simonmeggle/sahi2omd/archive/master.zip.
+Extract the content (!) of sahi2omd-master.zip/sahi2omd-master/ into your Sahi installation folder (e.g. C:\sahi). 
+Open SAHI_HOME\userdata\bin\sahi2omd.vbs and change variable sahi_home to the Sahi installation folder (e.g. C:\sahi). This folder will be referenced in the following by SAHI_HOME. 
 2.2 MySQL 
 If you want to store all sahi results into a mysql database, which can be queried actively from the monitoring system: 
-2.1.1 Database
-  * Install MySQL either on the same machine or on any other machine which is reachable from both your Sahi test machine and your monitoring system. 
+2.2.1 Database installation 
+  * Install MySQL (Community Server) either on the same machine or on any other machine which is reachable from both your Sahi test machine and your monitoring system. 
+    * Launch
+	* Custom - Server Machine
+	* Non-TRansactional
+	* Decition Support (20 Connections) 
+	* 3306 / add firewall exception
+	* Best Suppor tfor Multilignualism (UTF8)
+	* include bin dir in PATH
   * Import sahidb.sql to create the sahi datbase. 
-  * Create a user (e.g. "sahi", password "sahidb") and grant all privileges to this user to database "sahi". 
-2.1.2 Database driver
-  * Create SAHI_HOME\extlib\db, download "MySQL ODBC 5.1 Driver" and extract "mysql-connector-java-5.1.21-bin.jar" in to this folder. 
-  * Open SAHI_HOME\userdata\bin\sahi2omd.vbs and set the variables mysql_host, mysql_odbc_driver, mysql_connector, mysql_user, mysql_password
+    * cmd > mysql -u root -p < SAHI_HOME\sahidb.sql
+  * Create a user (e.g. "sahi", password "sahi") and grant all privileges to this user to database "sahi": 
+    * cmd > mysql -u root -p
+	  grant all on sahi.* to 'sahi'@'%' identified by 'sahi';
+	  flush privileges;
+  * Now you should be able to connect to the sahi DB from your monitoring server with 
+     mysql -h [sahi-host] -u sahi -p
+2.2.2 Database driver
+2.2.2.1 JDBC Driver for MySQL 
+  * Download "JDBC Driver for MySQL" from http://www.mysql.de/products/connector/ 
+  * Create the folder SAHI_HOME\extlib\db and extract "mysql-connector-java-5.1.22-bin.jar" into it
   * Add the path to the mysql driver to SAHI_EXT_CLASS_PATH in 
     * SAHI_HOME\userdata\bin\start_sahi.bat
 	* SAHI_HOME\userdata\bin_start_dashboard.bat
-SET SAHI_EXT_CLASS_PATH=%EXT_CLASS_PATH%;..\..\extlib\db\mysql-connector-java-5.1.21-bin.jar
-  
-  
+SET SAHI_EXT_CLASS_PATH=%EXT_CLASS_PATH%;..\..\extlib\db\mysql-connector-java-5.1.22-bin.jar
+2.2.2.2 ODBC Driver for MySQL 
+  * Download "ODBC Driver for MySQL" MSI installer from http://www.mysql.de/products/connector/ and execute the installer
+  * Get the driver name: open "Start -> settings -> control panel -> administrative tools -> ODBC data sources -> driver" and verify that there is an entry like  "MySQL ODBC 5.2w Driver"
+2.2.3 Database connection data
+  * Open SAHI_HOME\userdata\bin\sahi2omd.vbs and set the variables 
+    * mysql_host - if MySQL is installed onthe same machine, use "localhost"
+	* mysql_odbc_driver - this is the driver name you verified in 2.2.2.2, e.g. "MySQL ODBC 5.2w Driver"
+	* mysql_connector - this is the path to the JDBC Driver jar file you downloaded in 2.2.2.1
+	* mysql_user - e.g. "sahi"
+	* mysql_password - e.g. "sahi"
+ 
 2.3 NSCA
 If you like to transfer sahi results as passive check results into your monitoring system: 
   * Download NSCA Win32 Client  from http://exchange.nagios.org/directory/Addons/Passive-Checks/NSCA-Win32-Client/details
-  * extract all three files into C:\%PROGRAMFILES%\send_nsca
+  * create C:\%PROGRAMFILES%\send_nsca and extract all three files into it
   * set password and encryption method in "send_nsca.cfg" as set in your monitoring system
-  * Variables to set in sahi2omd.vbs:
-    * send_nsca_bin
-	* send_nsca_cfg
-	* send_nsca_port
+  * Open SAHI_HOME\userdata\bin\sahi2omd.vbs and set the variables 
+    * send_nsca_bin - full path to send_nsca.exe
+	* send_nsca_cfg - full path to send_nsca.cfg
+	* send_nsca_port - port
 
+2.4 IrfanView
+2.4.1 Installation 
+  * Download Irfanview from http://www.irfanview.com/ and install
+  * Open SAHI_HOME\userdata\bin\sahi2omd.vbs and set the variable
+    * 
+	
 3. Additional modifications
 3.1 Firefox
 3.1.1 Disable fullscreen animation 
@@ -59,3 +89,7 @@ Bringing windows to foreground by a script is not allowed by default due to secu
 3.3 others
 3.3.1 Antivirus Software
 If you have problems with HTTPS checks, disable any realtime-protection Antivirus software. Chances are that the automatic acceptance of self-signed certificates issued by sahi is not possible as long as those functions are active. 
+3.3.2 Sahi
+3.3.2.1 Time between steps (optional)
+Open SAHIHOME\config\sahi.properties and change the following line:
+script.time_between_steps_on_error=200
