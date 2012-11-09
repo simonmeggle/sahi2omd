@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `sahi_jobs` (
   `guid` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `ind_guid` (`guid`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 

@@ -1,4 +1,0 @@
-Screenshots
-
-
-Wenn nagios.inc im DB mode eine nsca-Datei zurücklässt, ist dies eine Fehlermeldung, die passiv an Naigos gehen soll. 
