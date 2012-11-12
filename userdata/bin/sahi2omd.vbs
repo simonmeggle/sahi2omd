@@ -32,7 +32,7 @@ Const bWaitOnReturn = True
 Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg,send_nsca_port,mode
 Dim debug, version, FSObject, debugfile, objdebug, mysql_connector,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
 Dim command,guid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, capture, modwindow
-Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite
+Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,irfanview_bin
 
 guid = get_guid()
  
@@ -63,6 +63,9 @@ mysql_connector = sahi_home & "\extlib\db\mysql-connector-java-5.1.21-bin.jar"
 mysql_user = "sahi"
 ' MySQL password
 mysql_password = "sahipw"
+
+' Path to irfanview executable
+irfanview_bin = "C:\Programme\IrfanView\i_view32.exe"
 
 ' ##############################################################################
 ' Don't change anything below
@@ -261,6 +264,9 @@ command = command & "var $mysql_host=" & Chr(39) & mysql_host & Chr(39) & Chr(59
 command = command & "var $mysql_user=" & Chr(39) & mysql_user & Chr(39) & Chr(59)
 ' add mysql password
 command = command & "var $mysql_password=" & Chr(39) & mysql_password & Chr(39) & Chr(59)
+
+' add path to irfanview
+command = command & "var $irfanview_bin=" & Chr(39) & Replace(irfanview_bin, "\", "\\" ) & Chr(39) & Chr(59)
 
 ' add working mode variable (db/nsca)
 command = command & "var $mode=" & Chr(39) & mode & Chr(39) & Chr(59) & Chr(34)
