@@ -425,8 +425,8 @@ debug("========= function '" + arguments.callee.name + "' ===================");
 			_set($browsertitle,window.document.title );
 			debug("Bringing browser window '" + $browsertitle + "' to foreground with: '" + $sahi_userdata + '\\bin\\modwindow.vbs \''+ $browsertitle +'\' maximize');
 			_execute('cscript.exe ' + $sahi_userdata + '\\bin\\modwindow.vbs \''+ $browsertitle +'\' maximize', true);
-			debug("Will make a screenshot with :" + '\"C:\\Programme\\IrfanView\\i_view32.exe\" /capture=2 ' + '/convert=' + $fullname);
-			_execute('\"C:\\Programme\\IrfanView\\i_view32.exe\" /jpgq=10 /capture=2 ' + '/convert=' + $fullname, true);
+			debug("Will make a screenshot with :" + '\"' + $irfanview_bin + '" /jpgq=10 /capture=2 ' + '/convert=' + $fullname);
+			_execute('\"' + $irfanview_bin + '" /jpgq=10 /capture=2 ' + '/convert=' + $fullname, true);
 		} else {
 			// phantomJS render FIXME
 		}

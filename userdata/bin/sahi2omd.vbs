@@ -24,15 +24,15 @@
 
 Option Explicit
 ' NSCA
-' -mode nsca -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -capture -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
+' -mode nsca -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -capture -u http://oxid/shop/ -n omd1 -p 5667 -h sahidose -s 0_OK_3stp_ok.sah
 ' DB
-' -mode db -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -capture -u http://oxid/shop/ -n omd1 -h sahidose -s 0_OK_3stp_ok.sah
+' -mode db -m 1 -f testcases\0_OK_3stp_ok.sah -b firefox -capture -u http://oxid/shop/ -n omd1 -p 5667 -h sahidose -s 0_OK_3stp_ok.sah
 
 Const bWaitOnReturn = True
-Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg,send_nsca_port,mode
+Dim sahi_home, sahi_userdata, sahi_scripts, sahi_results, send_nsca_bin, send_nsca_cfg,send_nsca_port,send_nsca_default_port,mode
 Dim debug, version, FSObject, debugfile, objdebug, mysql_connector,mysql_user,mysql_password,mysql_host,mysql_dbname,mysql_odbcdriver
 Dim command,guid,resultfile, nscadatafile,timenow,timestart,timeend,Wshell,runtime, arr_results, capture, modwindow
-Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite
+Dim i,file,url,browser,warning,critical,nagios,hostname,service,maxthreads,singlesession,help,helpstring,expandsuite,irfanview_bin
 
 guid = get_guid()
  
@@ -50,8 +50,7 @@ send_nsca_bin = "C:\Programme\send_nsca\send_nsca.exe"
 ' send_nsca config file
 send_nsca_cfg = "C:\Programme\send_nsca\send_nsca.cfg"
 ' send_nsca port
-send_nsca_port = 5667
-
+send_nsca_default_port = 5667
 
 ' MySQL Hostname
 mysql_host = "localhost"
@@ -63,6 +62,9 @@ mysql_connector = sahi_home & "\extlib\db\mysql-connector-java-5.1.21-bin.jar"
 mysql_user = "sahi"
 ' MySQL password
 mysql_password = "sahipw"
+
+' Path to irfanview executable
+irfanview_bin = "C:\Programme\IrfanView\i_view32.exe"
 
 ' ##############################################################################
 ' Don't change anything below
@@ -143,6 +145,9 @@ Do While i < WScript.Arguments.Count
 			WScript.echo "ERROR: Please specify the receiving monitoring server (-n). "  & helpstring
 			WScript.quit(1)
 		End If	
+	ElseIf WScript.Arguments(i) = "/p" Or WScript.Arguments(i) = "-p" Then
+		i = i + 1
+		send_nsca_port = Int(WScript.Arguments(i))		
 	ElseIf WScript.Arguments(i) = "/h" Or WScript.Arguments(i) = "-h" Then
 		i = i + 1
 		If i < WScript.Arguments.Count Then
@@ -200,6 +205,10 @@ End If
 If url = "" Then
 	WScript.echo "ERROR: Please specify a base url (-u). "  & helpstring
 	WScript.quit(1)
+End If
+
+If send_nsca_port = "" Then
+	send_nsca_port = send_nsca_default_port
 End If
 
 If maxthreads = "" Then
@@ -261,6 +270,9 @@ command = command & "var $mysql_host=" & Chr(39) & mysql_host & Chr(39) & Chr(59
 command = command & "var $mysql_user=" & Chr(39) & mysql_user & Chr(39) & Chr(59)
 ' add mysql password
 command = command & "var $mysql_password=" & Chr(39) & mysql_password & Chr(39) & Chr(59)
+
+' add path to irfanview
+command = command & "var $irfanview_bin=" & Chr(39) & Replace(irfanview_bin, "\", "\\" ) & Chr(39) & Chr(59)
 
 ' add working mode variable (db/nsca)
 command = command & "var $mode=" & Chr(39) & mode & Chr(39) & Chr(59) & Chr(34)
@@ -605,8 +617,8 @@ Sub about()
 					 "Usage:" & VbCrLf & VbCrLf & _
 		             "sahi2omd.vbs [-mode (nsca|db)] [-f <sahi file>] [-u <startURL>] [-b <browser>]" & VbCrLf & _
 		             "            [-w <warning (sec)>] [-c <critical (sec)>]" & VbCrLf & _
-		             "            [-n <monitoring server>] [-h <hostname>]" & VbCrLf & _
-		             "            [-s <servicedescription>] [-z ] [-m <maxsessions> ] [-e] [-p]" & VbCrLf & _					 
+		             "            [-n <monitoring server>] [-h <hostname>] [-p <NSCA port>]" & VbCrLf & _
+		             "            [-s <servicedescription>] [-z ] [-m <maxsessions> ] [-e] " & VbCrLf & _					 
 		             "" & VbCrLf & _
 		             "Parameters:" & VbCrLf & _
 					 "-mode       nsca: send results via NSCA, db: save results in local database." & VbCrLf & _
