@@ -19,7 +19,10 @@
 /sample_java_project
 /src
 /test
-/userdata/bin
+/userdata/bin/*.bat
+/userdata/bin/*.bak
+/userdata/bin/*.debug
+/userdata/bin/*.sh
 /userdata/certs
 /userdata/browser
 /userdata/config
