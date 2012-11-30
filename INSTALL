@@ -14,7 +14,7 @@ Download the source ZIP from https://github.com/simonmeggle/sahi2omd/archive/mas
 Extract the content (!) of sahi2omd-master.zip/sahi2omd-master/ into your Sahi installation folder (e.g. C:\sahi). 
 Open SAHI_HOME\userdata\bin\sahi2omd.vbs and change variable sahi_home to the Sahi installation folder (e.g. C:\sahi). This folder will be referenced in the following by SAHI_HOME. 
 2.2 MySQL 
-If you want to store all sahi results into a mysql database, which can be queried actively from the monitoring system: 
+If you want to store all sahi results into a mysql database (which will be checked actively from the monitoring system), follow these steps. 
 2.2.1 Database installation 
   * Install MySQL (Community Server) either on the same machine or on any other machine which is reachable from both your Sahi test machine and your monitoring system. 
     Choose the following installation options: 
@@ -51,7 +51,9 @@ SET SAHI_EXT_CLASS_PATH=%EXT_CLASS_PATH%;..\..\extlib\db\mysql-connector-java-5.
 	* mysql_connector - this is the path to the JDBC Driver jar file you downloaded in 2.2.2.1
 	* mysql_user - e.g. "sahi"
 	* mysql_password - e.g. "sahi"
- 
+
+2.2.4 On the monitoring system, download https://github.com/simonmeggle/sahi2omd-db and follow the Installation guide. 
+	
 2.3 NSCA
 If you like to transfer sahi results as passive check results into your monitoring system: 
   * Download NSCA Win32 Client  from http://exchange.nagios.org/directory/Addons/Passive-Checks/NSCA-Win32-Client/details
