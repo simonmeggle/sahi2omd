@@ -16,23 +16,6 @@
 
 _include('sprintf.inc');
 
-function onScriptFailure($exc){
-//	_alert("onScriptFailure");
-//	if ($exception_on_assert) {
-//	_alert("... handle exception.");
-		handle_exception($exc);
-//	} 
-} 
-	 
-function handle_exception($exc){
- 	TakeScreenshot();
-    _logExceptionAsFailure($exc); 
-    $output = $exc['message'];
-	
-  if (! $output) { $output = $exc; }
-  if (! $output) { $output = " "; }
-} 
-
 function initialize($w, $c) {
 	//onScriptError = onScriptFailure;
 	$debug_indent = 0;
@@ -68,7 +51,6 @@ function initialize($w, $c) {
  
    $nagiosStartTime = (new Date().getTime() / 1000).toString();
    debug("$nagiosStartTime = " + $nagiosStartTime);
-   _set($startURL, window.document.location.href);
    
    // Validierung der Thresholds
    if ($warn > 0 && $crit > 0 && $warn >= $crit) {
@@ -451,3 +433,20 @@ function makenumber(len) {
         ret += possible.charAt(Math.floor(Math.random() * possible.length));
     return ret;
 }
+
+function onScriptFailure($exc){
+//	_alert("onScriptFailure");
+//	if ($exception_on_assert) {
+//	_alert("... handle exception.");
+		handle_exception($exc);
+//	} 
+} 
+	 
+function handle_exception($exc){
+ 	TakeScreenshot();
+    _logExceptionAsFailure($exc); 
+    $output = $exc['message'];
+	
+  if (! $output) { $output = $exc; }
+  if (! $output) { $output = " "; }
+} 
