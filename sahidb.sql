@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Erstellungszeit: 19. Okt 2012 um 18:55
+-- Erstellungszeit: 30. Nov 2012 um 11:06
 -- Server Version: 5.5.16
 -- PHP-Version: 5.3.8
 
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `sahi_cases` (
   `sahi_suites_id` int(11) DEFAULT NULL,
   `duration` float NOT NULL,
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `msg` varchar(255) DEFAULT NULL,
+  `msg` varchar(2500) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_sahi_cases_sahi_suites` (`sahi_suites_id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COMMENT='Sahi Testcases' AUTO_INCREMENT=1 ;
